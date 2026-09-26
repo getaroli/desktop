@@ -12,6 +12,25 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-26
+
+### Added
+
+- Delivery contract: `aroli materialize` re-lays managed configuration,
+  preserves local overrides, records the delivered inventory and backs up
+  retired managed files. `aroli update` now captures pre/post snapshots and
+  records delivery progress in `update.json`.
+- Release channels: stable follows signed release tags; `unstable-dev` follows
+  its integration branch. The package manifest is generated from
+  `packages/*.txt`; `aroli verify` compares it to the installed box.
+- Promotion gate: releases open a fast-forward-only, rebase PR to `main` and
+  require the release tag check. Branch protection rejects direct, non-linear
+  and force updates.
+- Delivery CI: ShellCheck, QML lint, profile dry-run matrix, Arch container
+  interface check, artifact verification, and the delivery-contract gate.
+- `aroli doctor --explain`, delivery progress in `aroli status`, and local
+  translation overrides persisted outside the managed shell tree.
+
 ### Added
 
 - Delivery-contract foundations: `docs/STRUCTURE.md` (repo map, one job per
