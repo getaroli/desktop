@@ -31,6 +31,10 @@ jobs:
           go-version: "1.27.x"
       - name: Go CLI
         run: go test ./...
+      - name: Generate and verify delivery manifest
+        run: |
+          ./scripts/generate-manifest.sh manifest.json
+          git diff --exit-code -- manifest.json
       - name: Installer dry-run plan
         run: |
           # install.sh targets Arch; outside Arch only the arg parsing and
@@ -60,6 +64,7 @@ jobs:
           done
       - name: Checksums
         run: |
+          ./scripts/generate-manifest.sh manifest.json
           git archive --format=tar.gz --prefix="aroli-desktop-${GITHUB_REF_NAME}/" \
             -o "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" "$GITHUB_REF_NAME"
           sha256sum "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" aroli-linux-amd64 aroli-linux-arm64 rice-linux-amd64 rice-linux-arm64 > SHA256SUMS.txt
