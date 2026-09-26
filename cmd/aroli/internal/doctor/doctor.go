@@ -15,9 +15,16 @@ import (
 // Doctor implements `aroli doctor [--fix]`. Reconciliation only creates
 // absent seeds; it never overwrites a local desktop choice.
 func Doctor(args []string) error {
-	fix := len(args) == 1 && args[0] == "--fix"
-	if len(args) > 1 || (len(args) == 1 && !fix) {
-		return errors.New("use: aroli doctor [--fix]")
+	fix, explain := false, false
+	for _, arg := range args {
+		switch arg {
+		case "--fix":
+			fix = true
+		case "--explain":
+			explain = true
+		default:
+			return errors.New("use: aroli doctor [--fix] [--explain]")
+		}
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -47,6 +54,9 @@ func Doctor(args []string) error {
 		for _, issue := range issues {
 			fmt.Println("  -", issue)
 		}
+	}
+	if explain {
+		fmt.Println("\nUserEdits aplica ~/.config/aroli/user_edits por último; MimeDefaults é seed-only; ShellLoad preserva seus rc locais; Manifest registra a última entrega.")
 	}
 	if !fix {
 		fmt.Println("\nPara reconciliar seeds locais: aroli doctor --fix")

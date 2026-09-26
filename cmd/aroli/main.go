@@ -107,7 +107,7 @@ Uso:
   aroli diagnose
   aroli logs [--list]         mostra o registro da instalação mais recente
   aroli materialize [--dry-run] reaplica a base e os seus overrides
-  aroli doctor [--fix]        verifica e repara integrações locais conhecidas
+  aroli doctor [--fix] [--explain] verifica e explica integrações locais
   aroli profile list|show|install NOME
   aroli snapshot create|list|restore NOME
   aroli wallpaper list|set|random|import|remove

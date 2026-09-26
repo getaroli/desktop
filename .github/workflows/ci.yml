@@ -9,6 +9,20 @@ permissions:
   contents: read
 
 jobs:
+  delivery:
+    name: Delivery contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delivery and shell gates
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck qt6-declarative-dev-tools
+          ./scripts/verify-delivery.sh
+          shellcheck -S warning install.sh diagnose home/.local/bin/aroli-backend home/.local/bin/rice scripts/*.sh
+          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r qmllint
+          python3 home/.config/quickshell/tools/i18n-check.py
+
   cli:
     name: Go CLI
     runs-on: ubuntu-latest
@@ -43,3 +57,31 @@ jobs:
         run: |
           bash install.sh --help >/dev/null
           bash install.sh --dry-run packages >/dev/null
+
+  dry-run-profiles:
+    name: Dry-run profile (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [minimal, desktop, creator, gaming]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.x"
+      - name: Exercise profile plan
+        run: go run ./cmd/aroli profile install "${{ matrix.profile }}" --dry-run --yes
+
+  container-install:
+    name: Arch installer interface
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install minimal parser dependencies
+        run: pacman -Syu --noconfirm bash coreutils findutils git
+      - name: Validate installer help and dry-run parser
+        run: |
+          bash install.sh --help >/dev/null
+          bash install.sh --dry-run --yes config >/dev/null

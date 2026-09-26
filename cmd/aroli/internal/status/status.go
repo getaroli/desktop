@@ -65,6 +65,12 @@ func Status(version string) error {
 	var update struct {
 		Remote    string `json:"remote"`
 		Available bool   `json:"update_available"`
+		Progress  struct {
+			Phase  string `json:"phase"`
+			Status string `json:"status"`
+			Before string `json:"before"`
+			After  string `json:"after"`
+		} `json:"progress"`
 	}
 	if data, err := os.ReadFile(filepath.Join(home, ".cache", "aroli-desktop", "update.json")); err == nil && json.Unmarshal(data, &update) == nil && update.Remote != "" {
 		state := "em dia"
@@ -74,6 +80,9 @@ func Status(version string) error {
 		fmt.Printf("atualização  %s\n", state)
 	} else {
 		fmt.Println("atualização  ainda não verificada (aroli check --force)")
+	}
+	if data, err := os.ReadFile(filepath.Join(home, ".cache", "aroli-desktop", "update.json")); err == nil && json.Unmarshal(data, &update) == nil && update.Progress.Phase != "" {
+		fmt.Printf("entrega     %s: %s (%s → %s)\n", update.Progress.Phase, update.Progress.Status, update.Progress.Before, update.Progress.After)
 	}
 	if root, err := snapshot.SnapshotRoot(); err == nil {
 		if entries, err := os.ReadDir(root); err == nil {

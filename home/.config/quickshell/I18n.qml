@@ -21,8 +21,7 @@ import QtQuick
 // proven that a `readonly property var` holding all 400+ entries arrives as
 // `undefined` when read from here. The full reason lives in the header of
 // translations-es.js.
-import "translations-es.js" as Es
-import "translations-pt-BR.js" as PtBR
+import "translations.js" as Translations
 
 Singleton {
     id: root
@@ -62,8 +61,8 @@ Singleton {
     // translated, because in another language the pieces go in another
     // order.
     function tr(s, a0, a1, a2) {
-        var out = root.spanish && Es.es[s] !== undefined ? Es.es[s]
-                : root.portugueseBrazil && PtBR.ptBR[s] !== undefined ? PtBR.ptBR[s] : s;
+        var dictionary = Translations.table[root.lang]
+        var out = dictionary !== undefined && dictionary[s] !== undefined ? dictionary[s] : s;
         if (a0 !== undefined) out = out.split("{0}").join(a0);
         if (a1 !== undefined) out = out.split("{1}").join(a1);
         if (a2 !== undefined) out = out.split("{2}").join(a2);
