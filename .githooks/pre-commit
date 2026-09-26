@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# pre-commit gate: shell syntax on staged scripts, whitespace check,
+# delivery contract. Fast by design; the full suite lives in CI.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+staged="$(git diff --cached --name-only --diff-filter=ACM)"
+
+shell_for_stage=""
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  case "$f" in
+    *.sh|install.sh|diagnose|scripts/*|home/.local/bin/*) shell_for_stage="$shell_for_stage $f" ;;
+    *)
+      if [ -f "$f" ] && head -n1 "$f" | grep -qE '^#!.*\b(bash|sh)\b'; then
+        shell_for_stage="$shell_for_stage $f"
+      fi
+      ;;
+  esac
+done <<< "$staged"
+
+# shellcheck disable=SC2086
+if [ -n "$shell_for_stage" ]; then
+  # shellcheck disable=SC2086
+  for f in $shell_for_stage; do
+    [ -f "$f" ] || continue
+    bash -n "$f" || { printf 'pre-commit: syntax error in %s\n' "$f" >&2; exit 1; }
+  done
+fi
+
+git diff --check || { printf 'pre-commit: whitespace errors (see above).\n' >&2; exit 1; }
+
+./scripts/verify-delivery.sh
