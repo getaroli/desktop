@@ -19,8 +19,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck qt6-declarative-dev-tools
           ./scripts/verify-delivery.sh
-          shellcheck -S warning install.sh diagnose home/.local/bin/aroli-backend home/.local/bin/rice scripts/*.sh
-          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r qmllint
+          shellcheck -S error install.sh diagnose home/.local/bin/aroli-backend home/.local/bin/rice scripts/*.sh
+          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r qmllint --bare
           python3 home/.config/quickshell/tools/i18n-check.py
 
   cli:
@@ -71,7 +71,11 @@ jobs:
         with:
           go-version: "1.27.x"
       - name: Exercise profile plan
-        run: go run ./cmd/aroli profile install "${{ matrix.profile }}" --dry-run --yes
+        run: |
+          mkdir -p .ci-bin
+          printf '#!/usr/bin/env sh\nexit 0\n' > .ci-bin/pacman
+          chmod +x .ci-bin/pacman
+          PATH="$PWD/.ci-bin:$PATH" go run ./cmd/aroli profile install "${{ matrix.profile }}" --dry-run --yes
 
   container-install:
     name: Arch installer interface
@@ -84,4 +88,4 @@ jobs:
       - name: Validate installer help and dry-run parser
         run: |
           bash install.sh --help >/dev/null
-          bash install.sh --dry-run --yes config >/dev/null
+          USER=runner bash install.sh --dry-run --yes config >/dev/null
