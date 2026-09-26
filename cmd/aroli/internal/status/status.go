@@ -20,6 +20,19 @@ func Status(version string) error {
 	if err != nil {
 		return err
 	}
+	channel := "stable"
+	if data, err := os.ReadFile(filepath.Join(home, ".config", "aroli", "channel")); err == nil && string(data) != "" {
+		channel = string(data)
+		for len(channel) > 0 && (channel[len(channel)-1] == '\n' || channel[len(channel)-1] == '\r') {
+			channel = channel[:len(channel)-1]
+		}
+	}
+	box := "sem manifesto local"
+	if _, err := os.Stat(filepath.Join(home, ".local", "state", "aroli-desktop", "materialize.json")); err == nil {
+		box = "manifesto de entrega aplicado"
+	}
+	fmt.Printf("canal       %s\n", channel)
+	fmt.Printf("box         %s\n", box)
 	checks := []struct {
 		label, command string
 		args           []string
