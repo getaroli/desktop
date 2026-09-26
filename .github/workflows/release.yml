@@ -68,6 +68,13 @@ jobs:
           git archive --format=tar.gz --prefix="aroli-desktop-${GITHUB_REF_NAME}/" \
             -o "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" "$GITHUB_REF_NAME"
           sha256sum "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" aroli-linux-amd64 aroli-linux-arm64 rice-linux-amd64 rice-linux-arm64 > SHA256SUMS.txt
+      - name: Verify the artifact to publish
+        run: |
+          mkdir release-artifact
+          tar -xzf "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" -C release-artifact --strip-components=1
+          test -f release-artifact/manifest.json
+          (cd release-artifact && ./scripts/generate-manifest.sh /tmp/aroli-manifest.json)
+          diff -u release-artifact/manifest.json /tmp/aroli-manifest.json
       - name: Extract CHANGELOG entry
         run: |
           awk -v tag="[${GITHUB_REF_NAME#v}]" '

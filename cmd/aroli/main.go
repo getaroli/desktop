@@ -91,7 +91,7 @@ func run(args []string) error {
 		return nil
 	case "status":
 		return status.Status(cliVersion())
-	case "check", "update", "rollback", "prune":
+	case "check", "update", "rollback", "prune", "verify":
 		return sys.RunBackend("aroli", args)
 	default:
 		return fmt.Errorf("comando desconhecido %q (use 'aroli help')", args[0])
@@ -119,7 +119,7 @@ Uso:
   aroli export DIRETÓRIO | aroli import DIRETÓRIO [--yes]
   aroli cli update [--dry-run] atualiza somente o binário da CLI
   aroli plugins list|install [opções] [nome...]
-  aroli status | check | update | rollback | prune
+  aroli status | check | update | rollback | prune | verify
 
 Instalação:
   --dry-run                mostra o plano, sem alterar nada

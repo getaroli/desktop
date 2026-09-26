@@ -37,6 +37,7 @@ FORCE=0
 APPLY=0
 NO_REINSTALL=0
 CHANNEL="stable"
+CHANNEL_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/aroli/channel"
 
 if [ -t 1 ] && [ "${NO_COLOR:-}" = "" ]; then
     C_TIT=$'\033[1;34m'; C_OK=$'\033[32m'; C_WARN=$'\033[33m'
@@ -367,8 +368,27 @@ bootstrap_update_backend() {  # $1 = remote tag
 
 cmd_update() {
     [ -n "$REPO" ] || die "could not find the aroli checkout (set AROLI_DESKTOP_REPO)"
-    [ "$CHANNEL" = stable ] || die "only --channel=stable exists; main is never auto-applied"
+    [ "$CHANNEL" = stable ] || [ "$CHANNEL" = unstable-dev ] || die "channel must be stable or unstable-dev"
     command -v git >/dev/null || die "git is missing"
+
+    # Development follows the named integration branch only. It never follows
+    # main, and stable remains tag-only, so a release is the sole promotion.
+    if [ "$CHANNEL" = unstable-dev ]; then
+        local before
+        before="$(current_ref)"
+        if [ "$DRY" = 1 ]; then
+            say "would: git fetch origin unstable-dev && git checkout -B unstable-dev origin/unstable-dev"
+            return 0
+        fi
+        ask "update this box from origin/unstable-dev?" || { skip "cancelled; nothing changed"; return 0; }
+        stash_live_changes "unstable-dev" || return 1
+        git -C "$REPO" fetch origin unstable-dev || { restore_live_changes "$before"; die "git fetch failed"; }
+        git -C "$REPO" checkout -B unstable-dev origin/unstable-dev || { restore_live_changes "$before"; die "git checkout unstable-dev failed"; }
+        record_state "$before" "unstable-dev"
+        [ "$NO_REINSTALL" = 1 ] || "$REPO/install.sh" --yes || warn "./install.sh reported an error"
+        restore_live_changes "unstable-dev"
+        return 0
+    fi
 
     local before remote
     before="$(current_ref)"
@@ -602,6 +622,8 @@ cmd_status() {
     printf 'aroli      %s\n' "$(local_version)"
     printf 'checkout  %s\n' "$(current_ref)"
     printf 'repo      %s\n' "${REPO:-not found}"
+    [ -f "$CHANNEL_FILE" ] && CHANNEL="$(tr -d '[:space:]' < "$CHANNEL_FILE")"
+    printf 'channel   %s\n' "$CHANNEL"
     if [ -n "$remote" ]; then
         printf 'latest    %s\n' "$remote"
         [ "$avail" = true ] && printf 'update    available (aroli update --dry-run)\n' \
@@ -617,6 +639,33 @@ cmd_status() {
     [ -n "$prev" ] && printf 'rollback  %s\n' "$prev"
 }
 
+# Read-only comparison between the release package contract and this box.
+cmd_verify() {
+    [ -n "$REPO" ] || die "could not find the aroli checkout (set AROLI_DESKTOP_REPO)"
+    local manifest="$REPO/manifest.json"
+    [ -f "$manifest" ] || die "manifest.json is missing; use a release checkout"
+    command -v python3 >/dev/null || die "python3 is required to read manifest.json"
+    command -v pacman >/dev/null || die "pacman is required to verify this Arch box"
+    local missing=0 pkg
+    while IFS= read -r pkg; do
+        [ -n "$pkg" ] || continue
+        if pacman -Qq "$pkg" >/dev/null 2>&1; then
+            printf 'ok       %s\n' "$pkg"
+        else
+            printf 'missing  %s\n' "$pkg"
+            missing=$((missing + 1))
+        fi
+    done < <(python3 - "$manifest" <<'PY'
+import json, sys
+for group in ("pacman", "extra", "aur", "gpu"):
+    for package in json.load(open(sys.argv[1]))["packages"].get(group, []): print(package)
+PY
+)
+    [ "$missing" -eq 0 ] && { ok "box matches manifest"; return 0; }
+    err "$missing package(s) missing; run: aroli install packages"
+    return 1
+}
+
 usage() {
     cat <<'USAGE'
 Usage: aroli <command> [options]
@@ -629,6 +678,7 @@ Commands:
   update [--dry-run]  check out the newest stable tag and re-run install.sh
   rollback            return to the ref before the last update
   prune [--apply]     list (default) or trash files retired by the last update
+  verify              compare installed packages with manifest.json (read-only)
 
 Options:
   -n, --dry-run     show what would happen, change nothing
@@ -663,7 +713,7 @@ while [ $# -gt 0 ]; do
         --channel=*) CHANNEL="${1#*=}" ;;
         --channel) shift; CHANNEL="${1:-}"; [ -n "$CHANNEL" ] || die "--channel needs a value" ;;
         -h|--help|help) usage; exit 0 ;;
-        version|status|check|notify-login|update|rollback|prune) CMD="$1" ;;
+        version|status|check|notify-login|update|rollback|prune|verify) CMD="$1" ;;
         *) die "unknown argument: $1 (try: aroli --help)" ;;
     esac
     shift
@@ -678,4 +728,5 @@ case "$CMD" in
     update)   cmd_update ;;
     rollback) cmd_rollback ;;
     prune)    cmd_prune ;;
+    verify)   cmd_verify ;;
 esac
