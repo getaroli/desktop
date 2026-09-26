@@ -129,7 +129,8 @@ Fix stuff                                   # vague, capitalized
 | `install.sh` | Installer (symlink mode by default, `--copy` available) |
 | `diagnose` | Read-only system diagnostics |
 | `packages/` | Package lists (`pacman`, `aur`, `optional-*`) |
-| `docs/` | Migration and identity notes |
+| `docs/` | Guides: `STRUCTURE.md` (repo map), `DEVELOPMENT.md` (workflow), `UPDATES.md` (delivery), migration and identity notes |
+| `.githooks/` + `scripts/verify-delivery.sh` | Commit/push gates (activate: `git config core.hooksPath .githooks`) and the delivery-contract check |
 | `LLMS.md` | Operating contract for automations and AI agents |
 
 ## 8. Releases

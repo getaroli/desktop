@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# commit-msg gate: Conventional Commits per CONTRIBUTING.md section 3.
+# Usage: commit-msg <path-to-commit-msg-file>. Skips merge commits.
+set -euo pipefail
+
+msg_file="${1:?usage: commit-msg <msg-file>}"
+subject="$(head -n1 "$msg_file")"
+
+case "$subject" in
+  "Merge "*) exit 0 ;;
+esac
+
+types="feat|fix|docs|style|refactor|perf|test|chore|i18n"
+if ! [[ "$subject" =~ ^($types)(\([a-z0-9_.-]+\))?:\ [a-z] ]]; then
+  printf 'commit-msg: subject must be "<type>(<scope>): <summary>", lowercase imperative, in English.\n' >&2
+  printf '  types: %s\n' "${types//|/, }" >&2
+  printf '  got:   %s\n' "$subject" >&2
+  exit 1
+fi
+
+if [[ "$subject" == *. ]]; then
+  printf 'commit-msg: subject must not end with a period.\n' >&2
+  exit 1
+fi
+
+if ((${#subject} > 72)); then
+  printf 'commit-msg: subject is %d chars, keep it at ~72 max.\n' "${#subject}" >&2
+  exit 1
+fi

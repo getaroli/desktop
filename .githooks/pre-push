@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# pre-push gate: shellcheck when available (warn-only when absent so a
+# missing tool never blocks a push), plus the delivery contract.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+if command -v shellcheck >/dev/null 2>&1; then
+  shellcheck -S warning install.sh diagnose scripts/*.sh home/.local/bin/* || exit 1
+else
+  printf 'pre-push: shellcheck not installed, skipping (CI runs it).\n' >&2
+fi
+
+./scripts/verify-delivery.sh
