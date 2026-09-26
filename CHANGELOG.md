@@ -14,6 +14,23 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ### Added
 
+- Delivery-contract foundations: `docs/STRUCTURE.md` (repo map, one job per
+  path), `docs/DEVELOPMENT.md` (dev loop, gates, how to add things) and
+  `docs/UPDATES.md` (how a change reaches installed machines, lanes, contract).
+  Local gates in `.githooks/` (`commit-msg` enforces Conventional Commits,
+  `pre-commit` checks shell syntax plus whitespace, `pre-push` runs shellcheck
+  when present; activate with `git config core.hooksPath .githooks`) and
+  `scripts/verify-delivery.sh` (installer phase parity, no orphan helper
+  scripts or package lists), wired into `pre-commit` and the next CI pass.
+- CLI split into `cmd/aroli/internal/`, one package per concern (`sys`,
+  `install`, `plugins`, `selfupdate`, `logs`, `profiles`, `snapshot`,
+  `wallpaper`, `gaming`, `reading`, `power`, `session`, `recover`, `prefs`,
+  `doctor`, `status`, `tui`); `cmd/aroli/main.go` is now only the dispatcher,
+  help text, and version. No behavior change; tests moved next to their
+  packages. Removed the dead `guidedInstall`/`guidedPlugins` helpers the TUI
+  had replaced.
+- Cardinal rules for scale and stability added to `LLMS.md` (repository
+  contract: organization, source of truth, delivery, hooks, safety).
 - Aroli para o Brave Origin (`~/.config/aroli-newtab`): tela inicial
   (hero, busca, zonas de atalhos, tarefas e atividade GitHub) com o
   Encaixe e o avatar oficiais, aba de ajustes oculta na engrenagem
