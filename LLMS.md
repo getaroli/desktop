@@ -199,8 +199,34 @@ from the AUR before executing it, even when `aroli` has already classified it.
 updates only the Go CLI binary after verifying the published SHA-256 checksum.
 They are distinct operations; explain which one is needed before running either.
 
-## Completion criteria
+## Repository contract (scale and stability)
 
+These rules keep the project shippable as it grows. See `docs/STRUCTURE.md`,
+`docs/DEVELOPMENT.md`, and `docs/UPDATES.md` for the full guides.
+
+1. **Organization is the point.** One purpose per path. Search before adding
+   (`rg --files | rg <name>`); reuse, never duplicate.
+2. **The repo is the source of truth.** Deployment is one way, repo into
+   `$HOME`. Never hand-copy a live tweak back; change the repo and redeploy.
+3. **One concern per file (and per package).** `cmd/aroli/main.go` only
+   dispatches; command logic lives in `cmd/aroli/internal/<concern>`.
+   An installer phase does one thing; a helper script has one job.
+4. **Every change must reach users.** A shipped config needs a delivery path
+   (`install.sh` phase or updater); a package needs its `packages/*.txt`
+   consumed; a script needs a caller. `scripts/verify-delivery.sh` enforces
+   the checkable part and runs in `pre-commit` and CI.
+5. **Base vs user, separated.** Shipped files may be re-laid; user-owned
+   files (`hypr/user.lua`, `kitty/user.conf`, runtime state in `.gitignore`)
+   are seeded once and never touched by updates.
+6. **Hooks always pass.** Activate with `git config core.hooksPath .githooks`
+   and never `--no-verify`. Commits follow Conventional Commits in English.
+7. **Safety culture is load-bearing.** No silent optionals, no telemetry,
+   no `sudo` surprises, nothing deleted without `--apply`, backups before
+   destructive acts. These are features, not friction.
+8. **Primary sources first.** Arch Wiki, Hyprland wiki, Quickshell/Qt docs;
+   confirm on the running system; prefer the repo's existing pattern.
+
+## Completion criteria
 A successful installation is not merely a zero exit code. Confirm all of the
 following before reporting completion:
 
