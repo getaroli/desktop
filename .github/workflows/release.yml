@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   validate:
@@ -98,3 +99,25 @@ jobs:
             gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
               --title "$GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
           fi
+
+  promote-main:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Assert that promotion is a fast-forward
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor origin/main "$GITHUB_SHA"
+      - name: Open the tag promotion pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="promotion/${GITHUB_REF_NAME}"
+          git push origin "$GITHUB_SHA:refs/heads/$branch"
+          gh pr create --base main --head "$branch" \
+            --title "release: promote ${GITHUB_REF_NAME}" \
+            --body "Promotes the validated release tag ${GITHUB_REF_NAME} to main."
+          gh pr merge "$branch" --rebase --auto --delete-branch
