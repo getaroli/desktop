@@ -21,6 +21,9 @@ Singleton {
     // "pt-BR" | "es" | "en". I18n reads it and the whole UI hangs off it. The
     // installer leaves it written per what you pick at install time (./install.sh --lang pt-BR).
     property alias language: opts.language
+    // Persisted outside the managed shell tree, so personal wording survives
+    // materialize and release updates. Shape: { "pt-BR": { "Key": "Value" } }.
+    property alias translationOverrides: opts.translationOverrides
 
     // ───────── notch ─────────
     // "notch" = island glued to the edge with inverted corners (MacBook).
@@ -225,6 +228,7 @@ Singleton {
         opts.palettePrevious = ({});
         opts.paletteScopeShell = true; opts.paletteScopeTerminal = true;
         opts.paletteScopeGtkQt = true; opts.paletteScopeHyprland = true;
+        opts.translationOverrides = ({})
         root.applyEffects();   // this one does not catch on by itself: it must be pushed to Hyprland
         // favApps and language are NOT touched on purpose: "restore defaults"
         // is about appearance, and neither your favorites nor the language you
@@ -258,6 +262,7 @@ Singleton {
             id: opts
 
             property string language: "pt-BR"
+            property var translationOverrides: ({})
 
             property string notchStyle: "notch"
             property int islandGap: 4

@@ -62,7 +62,9 @@ Singleton {
     // order.
     function tr(s, a0, a1, a2) {
         var dictionary = Translations.table[root.lang]
-        var out = dictionary !== undefined && dictionary[s] !== undefined ? dictionary[s] : s;
+        var overrides = Config.translationOverrides[root.lang]
+        var out = overrides !== undefined && overrides[s] !== undefined ? overrides[s]
+                : dictionary !== undefined && dictionary[s] !== undefined ? dictionary[s] : s;
         if (a0 !== undefined) out = out.split("{0}").join(a0);
         if (a1 !== undefined) out = out.split("{1}").join(a1);
         if (a2 !== undefined) out = out.split("{2}").join(a2);
