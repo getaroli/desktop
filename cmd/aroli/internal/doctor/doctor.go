@@ -1,19 +1,18 @@
-// Package doctor checks the local desktop integration and offers safe
-// session repairs. It reports; only --fix with confirmation acts.
+// Package doctor reconciles the small, user-local pieces of the delivery contract.
 package doctor
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
+	"github.com/getaroli/desktop/cmd/aroli/internal/materialize"
 	"github.com/getaroli/desktop/cmd/aroli/internal/sys"
 )
 
-// Doctor implements `aroli doctor [--fix]`.
+// Doctor implements `aroli doctor [--fix]`. Reconciliation only creates
+// absent seeds; it never overwrites a local desktop choice.
 func Doctor(args []string) error {
 	fix := len(args) == 1 && args[0] == "--fix"
 	if len(args) > 1 || (len(args) == 1 && !fix) {
@@ -23,19 +22,25 @@ func Doctor(args []string) error {
 	if err != nil {
 		return err
 	}
-	script := filepath.Join(home, ".config", "hypr", "set-wallpaper.sh")
 	issues := []string{}
-	if _, err := os.Stat(script); err != nil {
-		issues = append(issues, "script de wallpaper ausente")
+	userEdits := filepath.Join(home, ".config", "aroli", "user_edits")
+	mimeapps := filepath.Join(home, ".config", "mimeapps.list")
+	if _, err := os.Stat(userEdits); err != nil {
+		issues = append(issues, "UserEdits: diretório de overrides ausente")
 	}
-	if _, err := exec.LookPath("hyprctl"); err != nil {
-		issues = append(issues, "hyprctl não está disponível nesta sessão")
+	if _, err := os.Stat(mimeapps); err != nil {
+		issues = append(issues, "MimeDefaults: mimeapps.list ainda não foi semeado")
 	}
-	if _, err := exec.LookPath("quickshell"); err != nil {
-		issues = append(issues, "quickshell não está instalado")
+	for _, name := range []string{".zshrc.local", ".bashrc.local", ".zprofile.local", ".profile.local"} {
+		if _, err := os.Stat(filepath.Join(home, name)); err != nil {
+			issues = append(issues, "ShellLoad: "+name+" ausente")
+		}
+	}
+	if !materialize.StatePresent(home) {
+		issues = append(issues, "Manifest: nenhuma materialização registrada")
 	}
 	if len(issues) == 0 {
-		fmt.Println("Doctor: integrações locais essenciais parecem saudáveis.")
+		fmt.Println("Doctor: UserEdits, MimeDefaults, ShellLoad e Manifest estão saudáveis.")
 	} else {
 		fmt.Println("Doctor encontrou:")
 		for _, issue := range issues {
@@ -43,18 +48,37 @@ func Doctor(args []string) error {
 		}
 	}
 	if !fix {
-		fmt.Println("\nPara reaplicar integrações seguras da sessão: aroli doctor --fix")
+		fmt.Println("\nPara reconciliar seeds locais: aroli doctor --fix")
 		return nil
 	}
-	if !sys.Confirm(bufio.NewReader(os.Stdin), "Recarregar Hyprland e reiniciar o serviço Quickshell do usuário?") {
-		return nil
+	if err := os.MkdirAll(userEdits, 0o755); err != nil {
+		return err
 	}
-	if _, err := exec.LookPath("hyprctl"); err == nil {
-		_ = sys.Command("", "hyprctl", "reload").Run()
+	if _, err := os.Stat(mimeapps); os.IsNotExist(err) {
+		repo, cleanup, e := sys.EnsureRepositoryWithCleanup("", false)
+		if e != nil {
+			return e
+		}
+		defer cleanup()
+		data, e := os.ReadFile(filepath.Join(repo, "seeds", "mimeapps.list"))
+		if e != nil {
+			return e
+		}
+		if e = os.WriteFile(mimeapps, data, 0o644); e != nil {
+			return e
+		}
 	}
-	if _, err := exec.LookPath("systemctl"); err == nil {
-		_ = sys.Command("", "systemctl", "--user", "restart", "quickshell.service").Run()
+	for _, name := range []string{".zshrc.local", ".bashrc.local", ".zprofile.local", ".profile.local"} {
+		path := filepath.Join(home, name)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			if err := os.WriteFile(path, []byte("# Personal Aroli shell overrides. Updates never replace this file.\n"), 0o644); err != nil {
+				return err
+			}
+		}
 	}
-	fmt.Println("Doctor aplicou as reparações de sessão disponíveis.")
+	if !materialize.StatePresent(home) {
+		fmt.Println("Doctor: execute 'aroli materialize' para criar o Manifest da entrega.")
+	}
+	fmt.Println("Doctor aplicou os reconcilers locais seguros.")
 	return nil
 }

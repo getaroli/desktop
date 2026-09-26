@@ -19,6 +19,7 @@ import (
 	"github.com/getaroli/desktop/cmd/aroli/internal/gaming"
 	"github.com/getaroli/desktop/cmd/aroli/internal/install"
 	"github.com/getaroli/desktop/cmd/aroli/internal/logs"
+	"github.com/getaroli/desktop/cmd/aroli/internal/materialize"
 	"github.com/getaroli/desktop/cmd/aroli/internal/plugins"
 	"github.com/getaroli/desktop/cmd/aroli/internal/power"
 	"github.com/getaroli/desktop/cmd/aroli/internal/prefs"
@@ -54,6 +55,8 @@ func run(args []string) error {
 		return plugins.Plugins(args[1:])
 	case "logs":
 		return logs.ShowLogs(args[1:])
+	case "materialize":
+		return materialize.Materialize(args[1:])
 	case "doctor":
 		return doctor.Doctor(args[1:])
 	case "profile", "profiles":
@@ -103,6 +106,7 @@ Uso:
   aroli install [opções] [fase...]
   aroli diagnose
   aroli logs [--list]         mostra o registro da instalação mais recente
+  aroli materialize [--dry-run] reaplica a base e os seus overrides
   aroli doctor [--fix]        verifica e repara integrações locais conhecidas
   aroli profile list|show|install NOME
   aroli snapshot create|list|restore NOME

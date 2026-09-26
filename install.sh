@@ -1070,8 +1070,18 @@ EOF
     for f in "$root"/.config/*; do
         [ -e "$f" ] || continue
         local base; base="$(basename "$f")"
+        # XDG applications own mimeapps.list after first login. Keep the
+        # project default as a seed, never as a symlink or an update target.
+        [ "$base" = "mimeapps.list" ] && continue
         place "$f" "$HOME/.config/$base" ".config/$base"
     done
+
+    local mime_seed="$REPO/seeds/mimeapps.list" mime_dest="$HOME/.config/mimeapps.list"
+    if [ ! -e "$mime_dest" ] && [ -f "$mime_seed" ]; then
+        run cp -- "$mime_seed" "$mime_dest" && ok "mimeapps.list seeded (your defaults; updates never touch it)"
+    else
+        skip "mimeapps.list already yours (kept)"
+    fi
 
     # 3) ~/.local/bin: always copied, so they are genuinely executable
     run mkdir -p "$HOME/.local/bin"
