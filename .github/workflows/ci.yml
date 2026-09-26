@@ -20,7 +20,10 @@ jobs:
           sudo apt-get install -y shellcheck qt6-declarative-dev-tools
           ./scripts/verify-delivery.sh
           shellcheck -S error install.sh diagnose home/.local/bin/aroli-backend home/.local/bin/rice scripts/*.sh
-          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r qmllint --bare
+          export PATH="$PATH:/usr/lib/qt6/bin:/usr/lib/x86_64-linux-gnu/qt6/bin"
+          QMLLINT="$(command -v qmllint || command -v qml6lint)"
+          [ -n "$QMLLINT" ] || { echo "qmllint/qml6lint not found in PATH ($PATH)"; exit 1; }
+          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r "$QMLLINT" --bare
           python3 home/.config/quickshell/tools/i18n-check.py
 
   cli:
