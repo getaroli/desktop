@@ -47,6 +47,10 @@ home/.bashrc.local
 home/.zprofile.local
 home/.profile.local
 
+# XDG applications rewrite this file. The repository has only a first-install
+# seed in seeds/mimeapps.list; the live default choices stay local.
+home/.config/mimeapps.list
+
 home/.config/spotify/prefs
 home/.config/gh/
 **/sessionData/
