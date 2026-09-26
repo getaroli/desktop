@@ -2,6 +2,7 @@
 package doctor
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -78,6 +79,17 @@ func Doctor(args []string) error {
 	}
 	if !materialize.StatePresent(home) {
 		fmt.Println("Doctor: execute 'aroli materialize' para criar o Manifest da entrega.")
+	}
+	// Package convergence is intentionally inside --fix and still asks: it can
+	// reach pacman/sudo, unlike the four local reconcilers above.
+	repo, cleanup, e := sys.EnsureRepositoryWithCleanup("", false)
+	if e == nil {
+		defer cleanup()
+		if _, statErr := os.Stat(filepath.Join(repo, "manifest.json")); statErr == nil && sys.Confirm(bufio.NewReader(os.Stdin), "Convergir os pacotes deste box com manifest.json?") {
+			if e := sys.Command(repo, "bash", "install.sh", "packages").Run(); e != nil {
+				return e
+			}
+		}
 	}
 	fmt.Println("Doctor aplicou os reconcilers locais seguros.")
 	return nil
