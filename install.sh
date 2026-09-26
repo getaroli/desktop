@@ -1442,7 +1442,9 @@ phase_system() {
         # recarga manual salva. Arquivo próprio (merge de policies soma
         # listas de arquivos distintos; nunca edita o umbra-allow.json).
         local allow_file=/etc/brave/policies/managed/aroli-allow.json
-        local want_allow have_allow
+        local ext_id want_allow have_allow
+        ext_id="$(aroli_ext_id "$REPO/home/.config/aroli-newtab")" \
+            || { warn "could not derive the Aroli extension id; Brave allowlist left unchanged"; return 0; }
         want_allow="$(printf '{"ExtensionInstallAllowlist":["%s"]}\n' "$ext_id")"
         have_allow="$(cat "$allow_file" 2>/dev/null)"
         if [ "$have_allow" = "$want_allow" ]; then
