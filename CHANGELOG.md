@@ -12,6 +12,15 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-09-26
+
+### Fixed
+
+- Delivery CI now runs profile dry-runs with an explicit pacman shim, supplies
+  the container user expected by the installer, and limits ShellCheck to
+  errors so existing advisory warnings remain visible without blocking a
+  release.
+
 ## [3.4.0] - 2026-09-26
 
 ### Added
