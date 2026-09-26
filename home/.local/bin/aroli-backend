@@ -158,6 +158,38 @@ record_state() {  # $1=previous_ref $2=new_ref
     mv -f "$tmp" "$STATE_FILE"
 }
 
+# update.json remains the update-check cache, with a small progress object so
+# an interrupted delivery is visible without inventing a second state file.
+record_update_progress() {  # $1=phase $2=status $3=before $4=after
+    mkdir -p "$CACHE_DIR"
+    local tmp remote avail
+    tmp="$(mktemp "${TMPDIR:-/tmp}/aroli-progress.XXXXXXXX")"
+    remote="$(read_cache_field remote)"; avail="$(read_cache_field update_available)"
+    printf '{\n  "local": "%s",\n  "remote": "%s",\n  "update_available": %s,\n  "progress": {"phase": "%s", "status": "%s", "before": "%s", "after": "%s", "updated_at": %s}\n}\n' \
+        "$(local_version)" "$remote" "${avail:-false}" "$1" "$2" "$3" "$4" "$(date +%s)" > "$tmp"
+    mv -f "$tmp" "$CACHE_FILE"
+}
+
+aroli_cli() {
+    local cli="$HOME/.local/bin/aroli"
+    [ -x "$cli" ] || { err "the Aroli CLI is missing at $cli"; return 1; }
+    "$cli" "$@"
+}
+
+deliver_update() {  # $1=before $2=after
+    local before="$1" after="$2" stamp
+    stamp="$(date +%Y%m%d-%H%M%S)"
+    record_update_progress snapshot-pre running "$before" "$after"
+    aroli_cli snapshot create "update-pre-$stamp" || { record_update_progress snapshot-pre failed "$before" "$after"; return 1; }
+    record_update_progress materialize running "$before" "$after"
+    aroli_cli materialize --repo "$REPO" || { record_update_progress materialize failed "$before" "$after"; return 1; }
+    record_update_progress doctor running "$before" "$after"
+    aroli_cli doctor || { record_update_progress doctor failed "$before" "$after"; return 1; }
+    record_update_progress snapshot-post running "$before" "$after"
+    aroli_cli snapshot create "update-post-$stamp" || { record_update_progress snapshot-post failed "$before" "$after"; return 1; }
+    record_update_progress complete ok "$before" "$after"
+}
+
 # Notify at most once per remote tag. Both the daily check and the login
 # notifier funnel here, so a pending update nags once per release, never
 # once per day. The seen mark is only written when notify-send reports
@@ -385,7 +417,7 @@ cmd_update() {
         git -C "$REPO" fetch origin unstable-dev || { restore_live_changes "$before"; die "git fetch failed"; }
         git -C "$REPO" checkout -B unstable-dev origin/unstable-dev || { restore_live_changes "$before"; die "git checkout unstable-dev failed"; }
         record_state "$before" "unstable-dev"
-        [ "$NO_REINSTALL" = 1 ] || "$REPO/install.sh" --yes || warn "./install.sh reported an error"
+        [ "$NO_REINSTALL" = 1 ] || deliver_update "$before" "unstable-dev" || warn "delivery did not complete; see $CACHE_FILE"
         restore_live_changes "unstable-dev"
         return 0
     fi
@@ -446,13 +478,8 @@ cmd_update() {
     record_state "$before" "$remote"
     ok "now on $remote (previous: $before; rollback with: aroli rollback)"
 
-    if [ "$NO_REINSTALL" = 0 ] && [ -x "$REPO/install.sh" ]; then
-        say "re-applying the aroli (./install.sh)..."
-        if [ "$ASSUME_YES" = 1 ]; then
-            "$REPO/install.sh" --yes || warn "./install.sh reported an error; your checkout is still on $remote"
-        else
-            "$REPO/install.sh" || warn "./install.sh reported an error; your checkout is still on $remote"
-        fi
+    if [ "$NO_REINSTALL" = 0 ]; then
+        deliver_update "$before" "$remote" || warn "delivery did not complete; your checkout is still on $remote (see $CACHE_FILE)"
     fi
     restore_live_changes "$remote"
     say "tip: aroli prune lists files the new release retired (nothing is deleted without --apply)"

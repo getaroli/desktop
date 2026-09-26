@@ -50,9 +50,13 @@ nobody:
 - `scripts/verify-delivery.sh` encodes the checkable part of this contract
   (phase parity, no orphan scripts/packages) and runs in `pre-commit` and CI.
 
-Planned (next phase): a declarative `materialize` step (re-lay base,
-prune dropped files, overlay user edits last), idempotent `doctor`
-reconcilers for stateful drift, and a release `manifest.json` so packages
-added to a set reach existing boxes on update instead of fresh installs
-only. Until then: every new shipped file needs an explicit delivery path
-in the installer or updater, verified by dry-run.
+`aroli update` records its progress in `~/.cache/aroli-desktop/update.json`.
+After the checkout changes, it creates a pre-update snapshot, runs
+`aroli materialize` (re-lay base, prune only still-managed removals, then
+overlay `~/.config/aroli/user_edits`), runs the read-only `doctor`, and
+creates a post-update snapshot. A failed stage remains visible in
+`update.json`; the checkout is retained so `aroli rollback` remains explicit.
+
+`doctor --fix` owns the four idempotent local reconcilers: UserEdits,
+MimeDefaults, ShellLoad and Manifest. Package convergence is separately
+confirmed because it may reach pacman and sudo.
