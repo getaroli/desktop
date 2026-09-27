@@ -12,6 +12,14 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+## [3.4.2] - 2026-09-26
+
+### Fixed
+
+- Delivery CI resolves `qmllint`/`qml6lint` from the Qt bin directories
+  (`/usr/lib/qt6/bin`), where Ubuntu installs it outside `PATH`, instead
+  of failing with `xargs: qmllint: No such file or directory`.
+
 ## [3.4.1] - 2026-09-26
 
 ### Fixed
