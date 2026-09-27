@@ -12,6 +12,16 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+## [3.4.3] - 2026-09-26
+
+### Fixed
+
+- Delivery CI lints QML with Qt's default imports instead of `--bare`
+  (which hid even `QtQuick` and the builtins, failing with exit 255),
+  installs the `QtQuick` QML modules, and tolerates import warnings for
+  modules unavailable on noble's Qt 6.4 (`Quickshell`,
+  `QtQuick.Effects`) via `--max-warnings -1`. Syntax errors still fail.
+
 ## [3.4.2] - 2026-09-26
 
 ### Fixed
