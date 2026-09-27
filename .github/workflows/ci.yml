@@ -23,11 +23,12 @@ jobs:
           export PATH="$PATH:/usr/lib/qt6/bin:/usr/lib/x86_64-linux-gnu/qt6/bin"
           QMLLINT="$(command -v qmllint || command -v qml6lint)"
           [ -n "$QMLLINT" ] || { echo "qmllint/qml6lint not found in PATH ($PATH)"; exit 1; }
-          # No --bare: it drops Qt's default imports, so even QtQuick and the
-          # builtins fail to resolve. Quickshell (and QtQuick.Effects on noble's
-          # Qt 6.4) cannot resolve here, so import warnings are tolerated via
-          # --max-warnings -1; syntax errors still fail the gate.
-          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r "$QMLLINT" --max-warnings -1
+          # Warning levels come from .qmllint.ini at the repo root (auto-discovered
+          # upwards from each file): semantic warnings are info because
+          # Quickshell and QtQuick.Effects cannot resolve on noble's Qt 6.4,
+          # so this gate checks syntactic validity. No version-specific CLI
+          # flags: Qt 6.4 does not know --max-warnings/--bare semantics we need.
+          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r "$QMLLINT"
           python3 home/.config/quickshell/tools/i18n-check.py
 
   cli:
