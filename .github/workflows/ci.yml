@@ -17,13 +17,17 @@ jobs:
       - name: Delivery and shell gates
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck qt6-declarative-dev-tools
+          sudo apt-get install -y shellcheck qt6-declarative-dev-tools qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts
           ./scripts/verify-delivery.sh
           shellcheck -S error install.sh diagnose home/.local/bin/aroli-backend home/.local/bin/rice scripts/*.sh
           export PATH="$PATH:/usr/lib/qt6/bin:/usr/lib/x86_64-linux-gnu/qt6/bin"
           QMLLINT="$(command -v qmllint || command -v qml6lint)"
           [ -n "$QMLLINT" ] || { echo "qmllint/qml6lint not found in PATH ($PATH)"; exit 1; }
-          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r "$QMLLINT" --bare
+          # No --bare: it drops Qt's default imports, so even QtQuick and the
+          # builtins fail to resolve. Quickshell (and QtQuick.Effects on noble's
+          # Qt 6.4) cannot resolve here, so import warnings are tolerated via
+          # --max-warnings -1; syntax errors still fail the gate.
+          find home/.config/quickshell -name '*.qml' -print0 | xargs -0 -r "$QMLLINT" --max-warnings -1
           python3 home/.config/quickshell/tools/i18n-check.py
 
   cli:
