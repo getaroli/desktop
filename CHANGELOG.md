@@ -12,6 +12,16 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+## [3.4.4] - 2026-09-26
+
+### Fixed
+
+- Delivery CI lints QML through `.qmllint.ini` at the repo root instead
+  of version-specific flags (Qt 6.4 knows neither `--max-warnings` nor
+  the needed `--bare` behavior). Semantic warnings are informational
+  because `Quickshell` and `QtQuick.Effects` cannot resolve on noble;
+  syntax errors still fail the gate.
+
 ## [3.4.3] - 2026-09-26
 
 ### Fixed
