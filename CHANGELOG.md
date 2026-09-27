@@ -12,6 +12,20 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+### Added
+
+- Disposable-HOME installer and rollback dry-run checks, plus snapshot restore
+  and doctor repair tests for backups and preservation of user-owned files.
+- Published support/compatibility policy, private vulnerability reporting, and
+  a disposable VM release smoke checklist.
+
+### Fixed
+
+- CLI self-update now rejects non-stable or malformed release tags and
+  non-hexadecimal SHA-256 entries before replacing the installed binary.
+- Promotion gate accepts a stable release tag reachable in the promoted
+  history, including merge commits.
+
 ## [3.4.6] - 2026-09-26
 
 ### Fixed

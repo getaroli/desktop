@@ -10,6 +10,7 @@ go build -o /tmp/aroli ./cmd/aroli
 ./diagnose                                   # read-only audit
 # ...edit...
 ./scripts/smoke-test.sh                      # release gate (read-only)
+./scripts/test-installer-dry-run.sh          # disposable HOME; proves no dry-run writes
 ```
 
 Work on a branch (`<type>/<short-topic>`); keep `main` clean. Never run
@@ -23,10 +24,10 @@ full installs headless and never pass `--yes` for the user by default
 | Shell scripts | `bash -n <file>` |
 | Python helpers | `python3 -m py_compile <file>` |
 | Go CLI | `go test -race ./...`, `go vet ./...`, `test -z "$(gofmt -l cmd/aroli)"` |
-| Installer behavior | `/tmp/aroli install --dry-run`, read the plan |
+| Installer behavior | `bash scripts/test-installer-dry-run.sh`; also inspect the plan |
 | Palette / i18n | Placeholder parity (`{0}`, `{1}`...) and identical key sets across dictionaries |
 | Runtime visuals | Switch wallpapers once, confirm bar, terminal, btop, Discord, Spotify follow |
-| Everything | `scripts/smoke-test.sh`, `git diff --check` |
+| Everything | `scripts/smoke-test.sh`, `scripts/test-installer-dry-run.sh`, `git diff --check` |
 
 Test behavior, not just syntax. Exercise the change on a running session.
 

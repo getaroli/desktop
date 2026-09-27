@@ -141,6 +141,10 @@ Requires **Hyprland 0.56+**. Aroli Desktop uses `hyprland.lua`, not
 | `aroli install --resume` | Continues from the last successfully completed installation phase. |
 | `aroli logs` | Shows the last 100 lines of the latest installation log. |
 
+See [supported environments and release smoke checks](docs/SUPPORT.md) and the
+[stable release checklist](docs/RELEASE-CHECKLIST.md). Report security issues
+privately using [SECURITY.md](SECURITY.md).
+
 ## Updates
 
 Aroli Desktop follows **stable tags** (`vX.Y.Z`, SemVer), never `main`,

@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/getaroli/desktop/security/advisories/new
+    about: Do not disclose unpatched vulnerabilities in a public issue.
