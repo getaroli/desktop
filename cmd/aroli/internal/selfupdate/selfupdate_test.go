@@ -1,6 +1,10 @@
 package selfupdate
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -36,4 +40,42 @@ func TestChecksumFor(t *testing.T) {
 	if _, err := checksumFor("bad", "short  bad\n"); err == nil {
 		t.Fatal("expected malformed checksum error")
 	}
+	if _, err := checksumFor("bad", strings.Repeat("g", 64)+"  bad\n"); err == nil {
+		t.Fatal("expected non-hex checksum error")
+	}
 }
+
+func TestLatestReleaseRequiresStableSemVerTag(t *testing.T) {
+	for _, tag := range []string{"v1.2.3", "v0.0.0"} {
+		t.Run(tag, func(t *testing.T) {
+			got, err := latestRelease(releaseTestClient(tag))
+			if err != nil || got.TagName != tag {
+				t.Fatalf("latestRelease() = %#v, %v", got, err)
+			}
+		})
+	}
+	for _, tag := range []string{"", "main", "v1.2", "v01.2.3", "v1.2.3-rc.1", "v1.2.3/../../other"} {
+		t.Run("reject-"+tag, func(t *testing.T) {
+			if _, err := latestRelease(releaseTestClient(tag)); err == nil {
+				t.Fatalf("latestRelease accepted invalid tag %q", tag)
+			}
+		})
+	}
+}
+
+func releaseTestClient(tag string) *http.Client {
+	body, _ := json.Marshal(githubRelease{TagName: tag})
+	return &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Header:     make(http.Header),
+			Body:       io.NopCloser(bytes.NewReader(body)),
+			Request:    request,
+		}, nil
+	})}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) { return f(request) }

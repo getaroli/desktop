@@ -1,4 +1,4 @@
-// Package selfupdate replaces only the CLI binary from a signed GitHub
+// Package selfupdate replaces only the CLI binary from a stable GitHub
 // release after verifying its SHA-256 checksum. It never touches the rice.
 package selfupdate
 
@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -24,6 +25,8 @@ const githubAPIRelease = "https://api.github.com/repos/getaroli/desktop/releases
 type githubRelease struct {
 	TagName string `json:"tag_name"`
 }
+
+var stableTagPattern = regexp.MustCompile(`^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$`)
 
 // UpdateCLI implements `aroli cli update [--dry-run]`.
 func UpdateCLI(version string, args []string) error {
@@ -96,8 +99,8 @@ func latestRelease(client *http.Client) (githubRelease, error) {
 	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&release); err != nil {
 		return githubRelease{}, err
 	}
-	if release.TagName == "" {
-		return githubRelease{}, errors.New("a release mais recente não possui uma tag")
+	if !stableTagPattern.MatchString(release.TagName) {
+		return githubRelease{}, fmt.Errorf("tag de release inválida para atualização: %q", release.TagName)
 	}
 	return release, nil
 }
@@ -133,13 +136,22 @@ func checksumFor(asset, contents string) (string, error) {
 	for _, line := range strings.Split(contents, "\n") {
 		fields := strings.Fields(line)
 		if len(fields) >= 2 && strings.TrimPrefix(fields[len(fields)-1], "*") == asset {
-			if len(fields[0]) != 64 {
+			if len(fields[0]) != 64 || !isHex(fields[0]) {
 				return "", fmt.Errorf("checksum inválido para %s", asset)
 			}
 			return fields[0], nil
 		}
 	}
 	return "", fmt.Errorf("a release não publicou checksum para %s", asset)
+}
+
+func isHex(value string) bool {
+	for _, r := range value {
+		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+			return false
+		}
+	}
+	return true
 }
 
 func installDownloadedCLI(binary []byte) error {

@@ -57,6 +57,13 @@ overlay `~/.config/aroli/user_edits`), runs the read-only `doctor`, and
 creates a post-update snapshot. A failed stage remains visible in
 `update.json`; the checkout is retained so `aroli rollback` remains explicit.
 
+`aroli cli update` accepts stable `vX.Y.Z` release tags and checks the binary
+against the release's `SHA256SUMS.txt` before an atomic replacement. The
+checksum is served beside the binary by the same GitHub release, so it detects
+corruption but is not independent publisher authentication. See
+[`SECURITY.md`](../SECURITY.md) for the threat boundary and
+[`docs/RELEASE-CHECKLIST.md`](RELEASE-CHECKLIST.md) for release verification.
+
 `doctor --fix` owns the four idempotent local reconcilers: UserEdits,
 MimeDefaults, ShellLoad and Manifest. Package convergence is separately
 confirmed because it may reach pacman and sudo.

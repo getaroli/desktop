@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Require a SemVer release tag on the promoted commit
+      - name: Require a reachable SemVer release tag
         run: |
-          git tag --points-at HEAD | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+'
+          if ! tag="$(git tag --merged HEAD --list | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n 1)"; then
+            tag=""
+          fi
+          [ -n "$tag" ] || { echo "No reachable stable vX.Y.Z release tag" >&2; exit 1; }

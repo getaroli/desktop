@@ -2,11 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, unstable-dev]
   pull_request:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   delivery:
@@ -65,6 +69,7 @@ jobs:
         run: |
           bash install.sh --help >/dev/null
           bash install.sh --dry-run packages >/dev/null
+          bash scripts/test-installer-dry-run.sh
 
   dry-run-profiles:
     name: Dry-run profile (${{ matrix.profile }})
@@ -97,3 +102,4 @@ jobs:
         run: |
           bash install.sh --help >/dev/null
           USER=runner bash install.sh --dry-run --yes config >/dev/null
+          bash scripts/test-installer-dry-run.sh
