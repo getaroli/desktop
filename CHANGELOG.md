@@ -12,6 +12,22 @@ and version numbers follow [Semantic Versioning](https://semver.org/):
 
 ## [Unreleased]
 
+## [3.4.6] - 2026-09-26
+
+### Fixed
+
+- No user-facing changes. Carries the `main` sync (rebase-copies from
+  the v3.4.4 promotion) so fresh tags descend from `main` again and the
+  automatic promotion assert passes.
+
+## [3.4.5] - 2026-09-26
+
+### Fixed
+
+- No user-facing changes. Validation release exercising the automatic
+  tag promotion (`promote-main`) after enabling Actions PR creation in
+  the organization.
+
 ## [3.4.4] - 2026-09-26
 
 ### Fixed
