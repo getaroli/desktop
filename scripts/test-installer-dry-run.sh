@@ -23,37 +23,41 @@ before_hashes="$(find "$home" -type f -print0 | sort -z | xargs -0 -r sha256sum)
 HOME="$home" XDG_CACHE_HOME="$home/.cache" XDG_CONFIG_HOME="$home/.config" \
     USER=aroli CI=1 bash "$root/install.sh" --dry-run --yes --lang en config >/dev/null
 
-rollback_output="$(HOME="$home" XDG_CACHE_HOME="$home/.cache" \
-    XDG_CONFIG_HOME="$home/.config" AROLI_DESKTOP_REPO="$root" \
-    bash "$root/home/.local/bin/aroli-backend" --dry-run rollback)"
-grep -q 'would: git checkout fixture-ref' <<<"$rollback_output" || {
-    echo 'rollback dry-run did not report the saved rollback target' >&2
-    exit 1
-}
+if [[ -d "$root/.git" ]]; then
+    rollback_output="$(HOME="$home" XDG_CACHE_HOME="$home/.cache" \
+        XDG_CONFIG_HOME="$home/.config" AROLI_DESKTOP_REPO="$root" \
+        bash "$root/home/.local/bin/aroli-backend" --dry-run rollback)"
+    grep -q 'would: git checkout fixture-ref' <<<"$rollback_output" || {
+        echo 'rollback dry-run did not report the saved rollback target' >&2
+        exit 1
+    }
 
-update_output="$(HOME="$home" XDG_CACHE_HOME="$home/.cache" \
-    XDG_CONFIG_HOME="$home/.config" AROLI_DESKTOP_REPO="$root" \
-    bash "$root/home/.local/bin/aroli-backend" --dry-run \
-        --channel=unstable-dev update)"
-grep -q 'would: git fetch origin unstable-dev' <<<"$update_output" || {
-    echo 'update dry-run did not report the development-channel plan' >&2
-    exit 1
-}
+    update_output="$(HOME="$home" XDG_CACHE_HOME="$home/.cache" \
+        XDG_CONFIG_HOME="$home/.config" AROLI_DESKTOP_REPO="$root" \
+        bash "$root/home/.local/bin/aroli-backend" --dry-run \
+            --channel=unstable-dev update)"
+    grep -q 'would: git fetch origin unstable-dev' <<<"$update_output" || {
+        echo 'update dry-run did not report the development-channel plan' >&2
+        exit 1
+    }
 
-migration_output="$(HOME="$home" bash "$root/scripts/migrate-from-legacy-rice.sh" \
-    --source "$legacy" --target "$home/target-checkout")"
-grep -q 'Would migrate:' <<<"$migration_output" || {
-    echo 'migration inspection did not report the legacy symlink' >&2
-    exit 1
-}
-[[ "$(readlink "$home/.config/legacy-example")" == "$legacy/README.md" ]] || {
-    echo 'migration inspection changed the legacy symlink' >&2
-    exit 1
-}
-[[ ! -e "$home/target-checkout" ]] || {
-    echo 'migration inspection created the target checkout' >&2
-    exit 1
-}
+    migration_output="$(HOME="$home" bash "$root/scripts/migrate-from-legacy-rice.sh" \
+        --source "$legacy" --target "$home/target-checkout")"
+    grep -q 'Would migrate:' <<<"$migration_output" || {
+        echo 'migration inspection did not report the legacy symlink' >&2
+        exit 1
+    }
+    [[ "$(readlink "$home/.config/legacy-example")" == "$legacy/README.md" ]] || {
+        echo 'migration inspection changed the legacy symlink' >&2
+        exit 1
+    }
+    [[ ! -e "$home/target-checkout" ]] || {
+        echo 'migration inspection created the target checkout' >&2
+        exit 1
+    }
+else
+    printf 'Skipping repo-history dry-runs: source archive has no .git directory.\n'
+fi
 
 after_files="$(find "$home" -type f -o -type l | sort)"
 after_hashes="$(find "$home" -type f -print0 | sort -z | xargs -0 -r sha256sum)"
