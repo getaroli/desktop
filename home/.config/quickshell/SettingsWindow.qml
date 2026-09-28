@@ -192,7 +192,7 @@ Scope {
         implicitHeight: 620
         minimumSize.width: 780
         minimumSize.height: 500
-        color: "#0b0b0b"
+        color: "#090909"
 
         // Al abrir: buscador vacío y con el foco, y sin descripción heredada de
         // la vez anterior.
@@ -248,7 +248,7 @@ Scope {
                 Rectangle {
                     Layout.preferredWidth: 224
                     Layout.fillHeight: true
-                    color: "#000000"
+                    color: "#050505"
 
                     ColumnLayout {
                         anchors { fill: parent; topMargin: 22; leftMargin: 14; rightMargin: 14 }
@@ -261,6 +261,18 @@ Scope {
                             font.family: Appearance.fontUI
                             font.pixelSize: Appearance.fsTitle
                             font.weight: Font.DemiBold
+                        }
+
+                        // A short luminance band echoes the notch edge and
+                        // gives the navigation column a clear starting point.
+                        Rectangle {
+                            Layout.leftMargin: 8
+                            Layout.topMargin: 5
+                            Layout.bottomMargin: 3
+                            implicitWidth: 42
+                            implicitHeight: 2
+                            color: Colors.accent
+                            opacity: 0.72
                         }
 
                         // ─────── buscador ───────
@@ -541,7 +553,7 @@ Scope {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
-                        color: Qt.rgba(1, 1, 1, 0.06)
+                        color: Qt.rgba(1, 1, 1, 0.09)
                     }
 
                     // ─────── secciones ───────
@@ -623,7 +635,7 @@ Scope {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 1
-                        color: Qt.rgba(1, 1, 1, 0.06)
+                        color: Qt.rgba(1, 1, 1, 0.09)
                     }
                     Item {
                         Layout.fillWidth: true
