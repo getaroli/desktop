@@ -47,24 +47,48 @@ QtObject {
         spacing: 7
         visible: card.visibleRows > 0
 
-        Text {
+        RowLayout {
+            Layout.fillWidth: true
             Layout.leftMargin: 3
+            spacing: 8
             visible: card.title.length > 0
-            text: card.title
-            color: Colors.accent
-            font.family: Appearance.fontUI
-            font.pixelSize: Appearance.fsXS
-            font.weight: Font.DemiBold
-            font.letterSpacing: 0.6
+
+            // Repeated band and notch cutout make each group read as a
+            // section of one instrument, while the wallpaper supplies hue.
+            Rectangle {
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 3
+                color: Colors.accent
+                opacity: 0.78
+            }
+            Rectangle {
+                Layout.preferredWidth: 5
+                Layout.preferredHeight: 3
+                color: Qt.rgba(1, 1, 1, 0.22)
+            }
+            Text {
+                text: card.title
+                color: Colors.inkMid
+                font.family: Appearance.font
+                font.pixelSize: Appearance.fsXS
+                font.weight: Font.DemiBold
+                font.letterSpacing: 1.1
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                Layout.leftMargin: 4
+                color: Qt.rgba(1, 1, 1, 0.10)
+            }
         }
 
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: inner.implicitHeight + 10
             radius: Appearance.radM
-            color: Qt.rgba(1, 1, 1, 0.045)
+            color: Qt.rgba(1, 1, 1, 0.035)
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.075)
+            border.color: Qt.rgba(1, 1, 1, 0.09)
 
             ColumnLayout {
                 id: inner
