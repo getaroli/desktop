@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/getaroli/desktop/stargazers"><img src="https://img.shields.io/github/stars/getaroli/desktop?style=flat-square&color=8b7cff&label=stars" alt="GitHub stars"></a>
-  <a href="https://github.com/getaroli/desktop/releases"><img src="https://img.shields.io/github/v/release/getaroli/desktop?display_name=tag&style=flat-square&color=8b7cff&label=release" alt="Latest release"></a>
+  <a href="https://github.com/getaroli/desktop/releases"><img src="https://img.shields.io/github/v/release/getaroli/desktop?include_prereleases=true&display_name=tag&style=flat-square&color=8b7cff&label=beta" alt="Latest beta release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/getaroli/desktop?style=flat-square&color=8b7cff" alt="GPL-3.0 license"></a>
   <a href="https://github.com/getaroli/desktop/actions"><img src="https://img.shields.io/github/actions/workflow/status/getaroli/desktop/release.yml?style=flat-square&label=build" alt="Build status"></a>
 </p>
