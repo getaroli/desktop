@@ -4,10 +4,9 @@
 // visual test harness embeds it in a plain window. Single source of truth:
 // any pixel difference between test and session is a bug, not a drift.
 //
-// A single floating card, Caelestia-placed and Aroli-dressed: stable dark
-// surface, wallpaper only as blurred mood behind it, one accent tab keeping
-// the threshold DNA. The card is the whole dialog, nothing floats outside
-// it, so multi-monitor and fractional scales cannot strand content.
+// Aroli's lock reads as a threshold: quiet luminance bands converge on a
+// notched dark chamber. Wallpaper supplies mood only; the structure remains
+// recognizable without its accent colour or any logo.
 import Quickshell
 import QtQuick
 import QtQuick.Effects
@@ -58,31 +57,88 @@ Item {
         opacity: root.bgOpacity * 0.42
     }
 
-    // ── THE CARD ──
-    // Fixed width (content 382 + air), height wrapping the column: one
-    // dialog, centered, floating over the mood. Grows from the badge morph
-    // instead of popping with it (see playIntro sequencing below).
+    // Luminance bands establish the threshold across the whole display. The
+    // center remains quiet behind the chamber; the exposed ends carry the
+    // structure onto any monitor aspect ratio without competing with PAM.
+    Repeater {
+        model: [ -1, 1 ]
+        delegate: Item {
+            required property int modelData
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: parent.height / 2 + modelData * 172
+            width: parent.width * 0.78
+            height: 12
+            opacity: root.bgOpacity * 0.72
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width * 0.39
+                height: 1
+                color: Colors.fg
+                opacity: 0.17
+            }
+            Rectangle {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width * 0.39
+                height: 1
+                color: Colors.fg
+                opacity: 0.17
+            }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: 22
+                height: 12
+                color: Colors.bg
+                opacity: 0.9
+            }
+        }
+    }
+
+    // ── THRESHOLD CHAMBER ──
+    // One fixed-width dialog keeps all interactive content together on every
+    // monitor. Its split rail and central notch give the lock a silhouette
+    // that survives monochrome palettes and blurred or absent wallpaper.
     Rectangle {
         id: card
         anchors.centerIn: parent
-        implicitWidth: 430
+        implicitWidth: 466
         implicitHeight: center.contentHeight + 60
-        radius: Appearance.radL
+        radius: 22
         color: Colors.bg
         border.width: 1
-        border.color: Qt.rgba(Colors.fg.r, Colors.fg.g, Colors.fg.b, 0.09)
+        border.color: Qt.rgba(Colors.fg.r, Colors.fg.g, Colors.fg.b, 0.14)
         opacity: root.cardOpacity
         scale: root.cardScale
         transformOrigin: Item.Center
 
-        // Accent tab: the threshold survives as a 64 px handle, not a band.
+        // Broken upper rail leaves a deliberate notch above the identity mark.
         Rectangle {
             anchors.top: parent.top
-            anchors.topMargin: 10
+            anchors.left: parent.left
+            anchors.leftMargin: 28
+            anchors.right: parent.right
+            anchors.rightMargin: 28
+            height: 1
+            color: Colors.fg
+            opacity: 0.16
+        }
+        Rectangle {
+            anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 64
-            height: 3
-            radius: 2
+            width: 92
+            height: 14
+            color: Colors.bg
+        }
+        Rectangle {
+            anchors.top: parent.top
+            anchors.topMargin: 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 38
+            height: 2
+            radius: 1
             color: Colors.accent
         }
 
