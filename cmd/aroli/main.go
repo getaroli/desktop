@@ -35,7 +35,7 @@ import (
 	"github.com/getaroli/desktop/cmd/aroli/internal/wallpaper"
 )
 
-var version = "dev" // set with -ldflags "-X main.version=vX.Y.Z"
+var version = "dev" // set with -ldflags "-X main.version=v0.1.0-beta.N"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {

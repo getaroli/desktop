@@ -3,8 +3,8 @@
 #
 #   aroli version              print the installed version
 #   aroli status               version + update check state + backups
-#   aroli check [--force]      ask GitHub for the newest stable tag (cached 24 h)
-#   aroli update [--dry-run]   move this checkout to the newest stable tag
+#   aroli check [--force]      ask GitHub for the newest beta tag (cached 24 h)
+#   aroli update [--dry-run]   move this checkout to the newest beta tag
 #   aroli rollback             go back to the ref recorded before the last update
 #   aroli prune [--apply]      list (or trash) files orphaned by the last update
 #
@@ -12,7 +12,7 @@
 # - `check` is the ONLY network command that runs unattended (systemd timer).
 #   It transfers a few KB (ls-remote or one API GET with ETag) and writes a
 #   single cache file. Everything else is on-demand and asks first.
-# - `update` only follows stable tags (vX.Y.Z). `main` is never auto-applied.
+# - `update` only follows beta tags (vX.Y.Z-beta.N). `main` is never applied.
 # - Nothing is deleted. `prune --apply` moves orphans to the trash (or to
 #   ~/.dotfiles-backup when no trash exists) and `rollback` brings them back.
 # - State files the desktop rewrites at runtime (hypridle.conf, language.conf,
@@ -23,7 +23,7 @@ set -uo pipefail
 VERSION_FILE_CANDIDATES=()
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/aroli-desktop"
 CACHE_FILE="$CACHE_DIR/update.json"
-ETAG_FILE="$CACHE_DIR/latest.etag"
+ETAG_FILE="$CACHE_DIR/beta.etag"
 LOCK_FILE="$CACHE_DIR/aroli.lock"
 STATE_FILE="$CACHE_DIR/state.json"
 CHECK_INTERVAL=86400   # 24 h: releases ship a few times per month, not per hour
@@ -36,8 +36,6 @@ QUIET=0
 FORCE=0
 APPLY=0
 NO_REINSTALL=0
-CHANNEL="stable"
-CHANNEL_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/aroli/channel"
 
 if [ -t 1 ] && [ "${NO_COLOR:-}" = "" ]; then
     C_TIT=$'\033[1;34m'; C_OK=$'\033[32m'; C_WARN=$'\033[33m'
@@ -72,12 +70,6 @@ find_repo() {
         printf '%s' "$AROLI_DESKTOP_REPO"
         return 0
     fi
-    # Compatibility with checkouts from before the Umbra Noctis -> Aroli
-    # Desktop rename.
-    if [ -n "${UMBRA_RICE_REPO:-}" ] && [ -d "${UMBRA_RICE_REPO:-}/.git" ]; then
-        printf '%s' "$UMBRA_RICE_REPO"
-        return 0
-    fi
     local link
     if [ -L "$HOME/.config/quickshell" ]; then
         link="$(readlink -f "$HOME/.config/quickshell" 2>/dev/null)"
@@ -88,7 +80,7 @@ find_repo() {
         esac
     fi
     local cand
-    for cand in "$HOME/aroli-desktop" "$HOME/aroli/desktop" "$HOME/umbra-noctis" "$HOME/dotfiles" "$HOME/.dotfiles"; do
+    for cand in "$HOME/aroli-desktop" "$HOME/aroli/desktop"; do
         if [ -d "$cand/.git" ]; then printf '%s' "$cand"; return 0; fi
     done
     local here
@@ -111,11 +103,11 @@ local_version() {
     fi
 }
 
-# SemVer compare: returns 0 when $1 > $2. Handles optional leading 'v' and
-# ignores pre-release suffixes for the comparison (a plain tag always wins).
+# Compare supported beta tags and treat a pre-reset install as older than beta.
 ver_gt() {
     local a="${1#v}" b="${2#v}"
-    a="${a%%-*}"; b="${b%%-*}"
+    [[ "$a" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.(0|[1-9][0-9]*)$ ]] || return 1
+    [[ "$b" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.(0|[1-9][0-9]*)$ ]] || return 0
     [ "$a" = "$b" ] && return 1
     local first
     first="$(printf '%s\n%s\n' "$a" "$b" | sort -V | head -1)"
@@ -123,8 +115,8 @@ ver_gt() {
 }
 
 highest_tag() {
-    # Highest vX.Y.Z (no suffix) from a newline-separated tag list on stdin.
-    grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1
+    # Highest vX.Y.Z-beta.N from a newline-separated tag list on stdin.
+    grep -E '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.(0|[1-9][0-9]*)$' | sort -V | tail -1
 }
 
 # ------------------------------------------------------------------ cache
@@ -224,11 +216,11 @@ remote_via_api() {
         code="$(curl -sS -m "$NET_TIMEOUT" -o "$body" -D "$hdr" -w '%{http_code}' \
             -H "Accept: application/vnd.github+json" \
             -H "If-None-Match: $(cat "$ETAG_FILE")" \
-            "https://api.github.com/repos/$REPO_SLUG/releases/latest" 2>/dev/null)"
+            "https://api.github.com/repos/$REPO_SLUG/releases?per_page=100" 2>/dev/null)"
     else
         code="$(curl -sS -m "$NET_TIMEOUT" -o "$body" -D "$hdr" -w '%{http_code}' \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$REPO_SLUG/releases/latest" 2>/dev/null)"
+            "https://api.github.com/repos/$REPO_SLUG/releases?per_page=100" 2>/dev/null)"
     fi
     case "$code" in
         304) read_cache_field remote; return 0 ;;
@@ -236,9 +228,9 @@ remote_via_api() {
             etag="$(grep -i '^etag:' "$hdr" | tr -d '\r' | sed 's/^[Ee][Tt][Aa][Gg]: *//' | head -1)"
             [ -n "$etag" ] && printf '%s' "$etag" > "$ETAG_FILE"
             if command -v jq >/dev/null 2>&1; then
-                tag="$(jq -r '.tag_name // ""' "$body" 2>/dev/null)"
+                tag="$(jq -r '.[] | select(.prerelease == true) | .tag_name // ""' "$body" 2>/dev/null | highest_tag)"
             else
-                tag="$(sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$body" | head -1)"
+                tag="$(sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$body" | highest_tag)"
             fi
             [ -n "$tag" ] && printf '%s' "$tag"
             return 0 ;;
@@ -251,7 +243,7 @@ cmd_check() {
     exec 9> "$LOCK_FILE"
     if ! flock -n 9; then
         skip "another aroli check is already running"
-        exit 0
+        return 0
     fi
 
     local last=0 now remote="" source="throttled" start_ms end_ms took
@@ -262,7 +254,7 @@ cmd_check() {
     fi
     if [ "$FORCE" = 0 ] && [ "$last" -gt 0 ] && [ $((now - last)) -lt "$CHECK_INTERVAL" ]; then
         say "aroli: cache is fresh ($(read_cache_field remote)); use --force to re-check"
-        exit 0
+        return 0
     fi
 
     start_ms="$(date +%s%3N 2>/dev/null || echo $((now * 1000)))"
@@ -273,7 +265,7 @@ cmd_check() {
     else
         warn "could not reach the update source; keeping the previous answer"
         [ -f "$CACHE_FILE" ] || write_cache "$(local_version)" false 0 "none"
-        exit 0
+        return 0
     fi
     end_ms="$(date +%s%3N 2>/dev/null || echo $(($(date +%s) * 1000)))"
     took=$((end_ms - start_ms))
@@ -391,40 +383,19 @@ bootstrap_update_backend() {  # $1 = remote tag
     [ "$QUIET" = 1 ] && args+=(--quiet)
     [ "$FORCE" = 1 ] && args+=(--force)
     [ "$NO_REINSTALL" = 0 ] || args+=(--no-reinstall)
-    [ "$CHANNEL" = stable ] || args+=(--channel="$CHANNEL")
     say "handing over to $tag's own updater"
-    RICE_BACKEND_BOOTSTRAPPED=1 exec bash "$tmp" update "${args[@]}"
+    AROLI_BACKEND_BOOTSTRAPPED=1 exec bash "$tmp" update "${args[@]}"
     rm -f "$tmp"
     return 1
 }
 
 cmd_update() {
     [ -n "$REPO" ] || die "could not find the aroli checkout (set AROLI_DESKTOP_REPO)"
-    [ "$CHANNEL" = stable ] || [ "$CHANNEL" = unstable-dev ] || die "channel must be stable or unstable-dev"
     command -v git >/dev/null || die "git is missing"
-
-    # Development follows the named integration branch only. It never follows
-    # main, and stable remains tag-only, so a release is the sole promotion.
-    if [ "$CHANNEL" = unstable-dev ]; then
-        local before
-        before="$(current_ref)"
-        if [ "$DRY" = 1 ]; then
-            say "would: git fetch origin unstable-dev && git checkout -B unstable-dev origin/unstable-dev"
-            return 0
-        fi
-        ask "update this box from origin/unstable-dev?" || { skip "cancelled; nothing changed"; return 0; }
-        stash_live_changes "unstable-dev" || return 1
-        git -C "$REPO" fetch origin unstable-dev || { restore_live_changes "$before"; die "git fetch failed"; }
-        git -C "$REPO" checkout -B unstable-dev origin/unstable-dev || { restore_live_changes "$before"; die "git checkout unstable-dev failed"; }
-        record_state "$before" "unstable-dev"
-        [ "$NO_REINSTALL" = 1 ] || deliver_update "$before" "unstable-dev" || warn "delivery did not complete; see $CACHE_FILE"
-        restore_live_changes "unstable-dev"
-        return 0
-    fi
 
     local before remote
     before="$(current_ref)"
-    FORCE=1 QUIET=1 cmd_check
+    QUIET=1 cmd_check
     remote="$(read_cache_field remote)"
     [ -n "$remote" ] || die "no remote tag known; check the network and run: aroli check --force"
 
@@ -460,9 +431,9 @@ cmd_update() {
     # Self-bootstrap: the updater itself is versioned, so this checkout's
     # backend may predate the fixes the update needs. The target tag's
     # backend runs the rest instead, extracted straight from git, without
-    # touching the worktree, so dirty trees are safe. RICE_BACKEND_BOOTSTRAPPED
+    # touching the worktree, so dirty trees are safe. AROLI_BACKEND_BOOTSTRAPPED
     # guards the hop against looping.
-    if [ "${RICE_BACKEND_BOOTSTRAPPED:-0}" != 1 ]; then
+    if [ "${AROLI_BACKEND_BOOTSTRAPPED:-0}" != 1 ]; then
         bootstrap_update_backend "$remote"
         case "$?" in
             0) ;;            # already that backend, or hop done (never returns)
@@ -649,8 +620,6 @@ cmd_status() {
     printf 'aroli      %s\n' "$(local_version)"
     printf 'checkout  %s\n' "$(current_ref)"
     printf 'repo      %s\n' "${REPO:-not found}"
-    [ -f "$CHANNEL_FILE" ] && CHANNEL="$(tr -d '[:space:]' < "$CHANNEL_FILE")"
-    printf 'channel   %s\n' "$CHANNEL"
     if [ -n "$remote" ]; then
         printf 'latest    %s\n' "$remote"
         [ "$avail" = true ] && printf 'update    available (aroli update --dry-run)\n' \
@@ -700,9 +669,9 @@ Usage: aroli <command> [options]
 Commands:
   version             print the installed version
   status              version, checkout, last check, rollback ref
-  check [--force]     ask GitHub for the newest stable tag (cached 24 h)
+  check [--force]     ask GitHub for the newest beta tag (cached 24 h)
   notify-login        desktop notice for a known pending update (login hook)
-  update [--dry-run]  check out the newest stable tag and re-run install.sh
+  update [--dry-run]  check out the newest beta tag and re-run install.sh
   rollback            return to the ref before the last update
   prune [--apply]     list (default) or trash files retired by the last update
   verify              compare installed packages with manifest.json (read-only)
@@ -714,7 +683,6 @@ Options:
   --force           ignore the 24 h check cache
   --apply           actually move orphans (prune only)
   --no-reinstall    skip ./install.sh after checkout
-  --channel=stable  the only channel (main is never auto-applied)
   -h, --help        this
 
 Examples:
@@ -737,8 +705,6 @@ while [ $# -gt 0 ]; do
         --force) FORCE=1 ;;
         --apply) APPLY=1 ;;
         --no-reinstall) NO_REINSTALL=1 ;;
-        --channel=*) CHANNEL="${1#*=}" ;;
-        --channel) shift; CHANNEL="${1:-}"; [ -n "$CHANNEL" ] || die "--channel needs a value" ;;
         -h|--help|help) usage; exit 0 ;;
         version|status|check|notify-login|update|rollback|prune|verify) CMD="$1" ;;
         *) die "unknown argument: $1 (try: aroli --help)" ;;

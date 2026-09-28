@@ -1,5 +1,5 @@
 [Unit]
-# Once a day is plenty: releases ship a few times per MONTH, not per hour.
+# Once a day is plenty: beta releases ship a few times per month, not per hour.
 # AccuracySec + RandomizedDelaySec let systemd coalesce this with other daily
 # timers instead of waking the machine for it alone.
 Description=Aroli Desktop update check, daily

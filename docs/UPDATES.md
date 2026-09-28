@@ -5,7 +5,8 @@ shipped config, a package, or anything a user must receive.
 
 ## Current mechanism
 
-Releases are stable tags (`vX.Y.Z`, SemVer); clients never follow `main`.
+Releases are beta pre-release tags (`v0.1.0-beta.N`); clients never follow
+`main` or stable release endpoints.
 
 - **Notice (own act to update, never automatic):** daily idle timer
   `aroli-update-check.timer` writes `~/.cache/aroli-desktop/update.json`;
@@ -57,7 +58,7 @@ overlay `~/.config/aroli/user_edits`), runs the read-only `doctor`, and
 creates a post-update snapshot. A failed stage remains visible in
 `update.json`; the checkout is retained so `aroli rollback` remains explicit.
 
-`aroli cli update` accepts stable `vX.Y.Z` release tags and checks the binary
+`aroli cli update` accepts beta `v0.1.0-beta.N` release tags and checks the binary
 against the release's `SHA256SUMS.txt` before an atomic replacement. The
 checksum is served beside the binary by the same GitHub release, so it detects
 corruption but is not independent publisher authentication. See

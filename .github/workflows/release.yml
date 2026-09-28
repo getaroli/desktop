@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*.*.*-beta.*"
 
 permissions:
   contents: write
@@ -25,8 +25,6 @@ jobs:
         run: |
           bash -n install.sh
           bash -n diagnose
-          bash -n home/.local/bin/rice
-          bash -n scripts/migrate-from-legacy-rice.sh
       - uses: actions/setup-go@v5
         with:
           go-version: "1.27.x"
@@ -58,17 +56,13 @@ jobs:
         run: |
           for arch in amd64 arm64; do
             GOOS=linux GOARCH="$arch" go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o "aroli-linux-$arch" ./cmd/aroli
-            # Transition names so installers predating the aroli rename
-            # (they fetch rice-linux-*) keep updating. Drop once no
-            # supported release looks them up.
-            cp "aroli-linux-$arch" "rice-linux-$arch"
           done
       - name: Checksums
         run: |
           ./scripts/generate-manifest.sh manifest.json
           git archive --format=tar.gz --prefix="aroli-desktop-${GITHUB_REF_NAME}/" \
             -o "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" "$GITHUB_REF_NAME"
-          sha256sum "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" aroli-linux-amd64 aroli-linux-arm64 rice-linux-amd64 rice-linux-arm64 > SHA256SUMS.txt
+          sha256sum "aroli-desktop-${GITHUB_REF_NAME}.tar.gz" aroli-linux-amd64 aroli-linux-arm64 > SHA256SUMS.txt
       - name: Verify the artifact to publish
         run: |
           mkdir release-artifact
@@ -87,37 +81,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          assets=(aroli-desktop-*.tar.gz SHA256SUMS.txt aroli-linux-amd64 aroli-linux-arm64 rice-linux-amd64 rice-linux-arm64)
+          assets=(aroli-desktop-*.tar.gz SHA256SUMS.txt aroli-linux-amd64 aroli-linux-arm64)
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             while IFS= read -r asset; do
               [ -n "$asset" ] || continue
               gh release delete-asset "$GITHUB_REF_NAME" "$asset" --yes
             done < <(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')
             gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
-            gh release edit "$GITHUB_REF_NAME" --draft=false --prerelease=false --notes-file RELEASE_NOTES.md
+            gh release edit "$GITHUB_REF_NAME" --draft=false --prerelease --latest=false --notes-file RELEASE_NOTES.md
           else
             gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
-              --title "$GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+              --title "$GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md --prerelease --latest=false
           fi
-
-  promote-main:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Assert that promotion is a fast-forward
-        run: |
-          git fetch origin main
-          git merge-base --is-ancestor origin/main "$GITHUB_SHA"
-      - name: Open the tag promotion pull request
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          branch="promotion/${GITHUB_REF_NAME}"
-          git push origin "$GITHUB_SHA:refs/heads/$branch"
-          gh pr create --base main --head "$branch" \
-            --title "release: promote ${GITHUB_REF_NAME}" \
-            --body "Promotes the validated release tag ${GITHUB_REF_NAME} to main."
-          gh pr merge "$branch" --rebase --auto --delete-branch

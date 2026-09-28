@@ -9,14 +9,14 @@ trap 'rm -rf -- "$home"' EXIT
 
 mkdir -p "$home/.config/hypr"
 mkdir -p "$home/.cache/aroli-desktop"
-legacy="$home/.local/share/diegoMalagrida-dotfiles"
-mkdir -p "$legacy" "$home/.config"
-cp "$root/README.md" "$legacy/README.md"
-ln -s "$legacy/README.md" "$home/.config/legacy-example"
+mkdir -p "$home/.config"
 printf 'user shell content\n' > "$home/.zshrc"
 printf 'user hypr content\n' > "$home/.config/hypr/user.lua"
 printf '{"previous_ref":"fixture-ref","current_ref":"current-ref"}\n' \
     > "$home/.cache/aroli-desktop/state.json"
+printf '{"local":"0.1.0-beta.1","remote":"v0.1.0-beta.2","update_available":true,"checked_at":%s}\n' \
+    "$(date +%s)" > "$home/.cache/aroli-desktop/update.json"
+: > "$home/.cache/aroli-desktop/aroli.lock"
 before_files="$(find "$home" -type f -o -type l | sort)"
 before_hashes="$(find "$home" -type f -print0 | sort -z | xargs -0 -r sha256sum)"
 
@@ -34,25 +34,9 @@ if [[ -d "$root/.git" ]]; then
 
     update_output="$(HOME="$home" XDG_CACHE_HOME="$home/.cache" \
         XDG_CONFIG_HOME="$home/.config" AROLI_DESKTOP_REPO="$root" \
-        bash "$root/home/.local/bin/aroli-backend" --dry-run \
-            --channel=unstable-dev update)"
-    grep -q 'would: git fetch origin unstable-dev' <<<"$update_output" || {
-        echo 'update dry-run did not report the development-channel plan' >&2
-        exit 1
-    }
-
-    migration_output="$(HOME="$home" bash "$root/scripts/migrate-from-legacy-rice.sh" \
-        --source "$legacy" --target "$home/target-checkout")"
-    grep -q 'Would migrate:' <<<"$migration_output" || {
-        echo 'migration inspection did not report the legacy symlink' >&2
-        exit 1
-    }
-    [[ "$(readlink "$home/.config/legacy-example")" == "$legacy/README.md" ]] || {
-        echo 'migration inspection changed the legacy symlink' >&2
-        exit 1
-    }
-    [[ ! -e "$home/target-checkout" ]] || {
-        echo 'migration inspection created the target checkout' >&2
+        bash "$root/home/.local/bin/aroli-backend" --dry-run update)"
+    grep -q "would: hand over to v0.1.0-beta.2's own updater" <<<"$update_output" || {
+        echo 'update dry-run did not report the beta-channel plan' >&2
         exit 1
     }
 else

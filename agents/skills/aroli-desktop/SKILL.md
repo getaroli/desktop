@@ -4,11 +4,11 @@ description: >
   REQUIRED for anything about Aroli Desktop (the Hyprland + Quickshell rice).
   ALWAYS load this skill first when the user mentions the rice, the desktop
   look, wallpaper theming, Spotify theming, the bar, the notch, control
-  center, Settings, launcher, lock screen, install, update, migration, or
+  center, Settings, launcher, lock screen, install, or update, or
   Aroli in any form. Triggers: aroli, rice, quickshell, hyprland config,
   wallpaper, pywal, spicetify, spotify theme, notch, island, control center,
-  Super+D, settings window, sddm, install.sh, aroli CLI, migration from
-  umbra-noctis. After loading, follow its routing to the topic skill.
+  Super+D, settings window, sddm, install.sh, or aroli CLI. After loading,
+  follow its routing to the topic skill.
 ---
 
 # Aroli Desktop

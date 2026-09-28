@@ -38,14 +38,5 @@ hyprctl configerrors
 ./diagnose
 ```
 
-## Migration
-
-To convert symlinks from a legacy install, first run with no effects:
-
-```sh
-./scripts/migrate-from-legacy-rice.sh
-./scripts/migrate-from-legacy-rice.sh --apply
-```
-
-See [docs/MIGRATION.md](docs/MIGRATION.md) and [LLMS.md](LLMS.md).
-For the 2.0 workflow and compatibility matrix, see [docs/2.0.md](docs/2.0.md).
+For beta releases and the update flow, see [README.md](README.md#updates) and
+[docs/UPDATES.md](docs/UPDATES.md).

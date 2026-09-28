@@ -20,7 +20,7 @@ func Status(version string) error {
 	if err != nil {
 		return err
 	}
-	channel := "stable"
+	channel := "beta"
 	if data, err := os.ReadFile(filepath.Join(home, ".config", "aroli", "channel")); err == nil && string(data) != "" {
 		channel = string(data)
 		for len(channel) > 0 && (channel[len(channel)-1] == '\n' || channel[len(channel)-1] == '\r') {

@@ -20,5 +20,5 @@ evidence, protective of system integrity.
 | `aroli-wallpaper` | Wallpaper/palette did not follow |
 | `aroli-spotify` | Spotify theming, spicetify errors |
 | `aroli-quickshell` | Editing QML, panels, translations |
-| `aroli-install` | Install, update, migrate, cleanup |
+| `aroli-install` | Install, update, cleanup |
 | `aroli-report` | Filing a GitHub issue with evidence |

@@ -26,14 +26,14 @@ user		hypridle.service
 user		hyprpolkitagent.service
 user		quickshell.service
 user		bt-agent.service
-# Daily GitHub tag check for `rice update`. Tiny (a few KB, cached 24 h),
+# Daily GitHub tag check for `aroli update`. Tiny (a few KB, cached 24 h),
 # idle-priority oneshot, zero resident processes. Disable anytime with:
-#   systemctl --user disable rice-update-check.timer
-user		rice-update-check.timer
+#   systemctl --user disable aroli-update-check.timer
+user		aroli-update-check.timer
 # Login notice for a pending update. Cache-read only (no network), oneshot,
 # dies in milliseconds; at most one notice per release. Disable anytime with:
-#   systemctl --user disable rice-update-notify.service
-user		rice-update-notify.service
+#   systemctl --user disable aroli-update-notify.service
+user		aroli-update-notify.service
 # tailscaled es lo que hace falta para las dos reglas de Tailscale de
 # system/etc/nftables.conf. Va comentado porque el demonio solo, sin un
 # `tailscale up` con tu cuenta, no hace nada: enciendelo tu si vas a usarlo.

@@ -22,7 +22,7 @@ DRY=0
 ASSUME_YES=0
 MODE=link            # link | copy
 UI_LANG=             # es | en | pt-BR; empty means "ask, or take the default"
-DEFAULT_LANG=pt-BR   # default language of this fork
+DEFAULT_LANG=pt-BR   # default language of this Aroli setup
 REQUESTED_PHASES=()
 
 ALL_PHASES=(base aur packages repos cursor config system graphics services sddm spicetify final)
@@ -837,9 +837,7 @@ phase_cursor() {
     local tmp="${TMPDIR:-/tmp}/aroli-pointer"
     local url="https://github.com/getaroli/aroli.git"
     local source="$tmp/themes/cursor/aroli"
-    local legacy_source="$tmp/themes/cursor/umbra"
     local target="$HOME/.local/share/icons/Aroli"
-    local legacy_target="$HOME/.local/share/icons/Umbra"
 
     if [ "$DRY" = 1 ]; then
         skip "would clone the latest Aroli Pointer from $url"
@@ -852,10 +850,6 @@ phase_cursor() {
         warn "could not fetch the Aroli Pointer repository"
         return 0
     }
-    # Compatibility: older checkouts of the repo still carry themes/cursor/umbra.
-    if [ ! -d "$source" ] && [ -d "$legacy_source" ]; then
-        source="$legacy_source"
-    fi
     [ -d "$source" ] || { warn "Aroli Pointer source was not found in the repository"; return 0; }
     command -v make >/dev/null 2>&1 || { warn "make is required to build Aroli Pointer"; return 0; }
 
@@ -928,22 +922,6 @@ EOF
         run gsettings set org.gnome.desktop.interface cursor-theme 'Aroli' || true
         run gsettings set org.gnome.desktop.interface cursor-size 32 || true
     fi
-    # Retire the legacy Umbra install once Aroli is live: keep a backup, never
-    # delete user data outright.
-    if [ -d "$legacy_target" ] && [ "$legacy_target" != "$target" ]; then
-        if [ -e "${legacy_target}.bak" ]; then
-            skip "legacy Umbra cursor kept at ${legacy_target}.bak"
-        else
-            run mv -- "$legacy_target" "${legacy_target}.bak" \
-                && ok "legacy Umbra cursor moved to Umbra.bak" || true
-        fi
-    fi
-    # Migrate a live session still pointing at the old theme name.
-    if command -v gsettings >/dev/null 2>&1; then
-        if [ "$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null)" = "'Umbra'" ]; then
-            run gsettings set org.gnome.desktop.interface cursor-theme 'Aroli' || true
-        fi
-    fi
     ok "Aroli Pointer installed from the latest main revision"
 }
 
@@ -979,7 +957,7 @@ EOF
 # WHY THIS EXISTS. Installers (bun, rustup, mise) persist themselves by
 # appending `export PATH=...` to ~/.zshrc. With --link that file is this
 # repo's home/.zshrc, so the lines landed in the repo and the next
-# `install.sh config` / `rice update` dropped them; with --copy (or a
+# `install.sh config` / `aroli update` dropped them; with --copy (or a
 # hand-unlinked rc) place() backed the whole file up and replaced it. Either
 # way `bun` stopped being found after every rice install. Now the repo sets
 # the standard tool PATHs itself, and whatever personal lines are still in a
@@ -1204,55 +1182,6 @@ EOF
                 && ok "$(basename "$user_dest") seeded from the template (yours; updates never touch it)"
         else
             skip "$(basename "$user_dest") already yours (kept)"
-        fi
-    done
-
-    # 7d) Umbra -> Aroli product rename. Bundled wallpapers were renamed
-    #     upstream (umbra-ember-coast -> aroli-ember-coast, umbra-obsidian-dunes
-    #     -> aroli-obsidian-dunes, umbra-silent-threshold ->
-    #     aroli-silent-threshold, umbra-ink-mountains -> aroli-black-mountains).
-    #     copy_tree above uses no-clobber, so rename the live copies instead of
-    #     duplicating 4K images. Same for a stale ~/.cache/wal/wal pointer.
-    local old_wp new_wp wal_file pair
-    for pair in "umbra-ember-coast.png:aroli-ember-coast.png" \
-                "umbra-obsidian-dunes.png:aroli-obsidian-dunes.png" \
-                "umbra-silent-threshold.png:aroli-silent-threshold.png" \
-                "umbra-ink-mountains.png:aroli-black-mountains.png"; do
-        old_wp="$HOME/Pictures/wallpapers/${pair%%:*}"
-        new_wp="$HOME/Pictures/wallpapers/${pair##*:}"
-        if [ -f "$old_wp" ] && [ ! -f "$new_wp" ]; then
-            run mv -- "$old_wp" "$new_wp" \
-                && ok "$(basename "$old_wp") renamed to $(basename "$new_wp") (Aroli Backdrops)"
-        fi
-    done
-    wal_file="$HOME/.cache/wal/wal"
-    if [ -f "$wal_file" ] && grep -q "Pictures/wallpapers/umbra-" "$wal_file" 2>/dev/null; then
-        if [ "$DRY" = 1 ]; then
-            skip "would point ~/.cache/wal/wal at the renamed Aroli wallpaper"
-        else
-            sed -i 's#Pictures/wallpapers/umbra-ember-coast#Pictures/wallpapers/aroli-ember-coast#; s#Pictures/wallpapers/umbra-obsidian-dunes#Pictures/wallpapers/aroli-obsidian-dunes#; s#Pictures/wallpapers/umbra-silent-threshold#Pictures/wallpapers/aroli-silent-threshold#; s#Pictures/wallpapers/umbra-ink-mountains#Pictures/wallpapers/aroli-black-mountains#' "$wal_file" \
-                && ok "pywal last-wallpaper pointer migrated to Aroli Backdrops"
-        fi
-    fi
-
-    # 7e) Umbra Noctis -> Aroli Desktop rename. Runtime dirs moved from
-    #     umbra-noctis to aroli-desktop; move the live dirs instead of
-    #     stranding snapshots, checkpoints, and the update cache. Never
-    #     merge: when the new location already exists it wins.
-    local legacy_dir new_dir
-    for pair in ".local/share/umbra-noctis:.local/share/aroli-desktop" \
-                ".local/state/umbra-noctis:.local/state/aroli-desktop" \
-                ".cache/umbra-noctis:.cache/aroli-desktop"; do
-        legacy_dir="$HOME/${pair%%:*}"
-        new_dir="$HOME/${pair##*:}"
-        if [ -e "$legacy_dir" ] && [ ! -e "$new_dir" ]; then
-            if [ "$DRY" = 1 ]; then
-                skip "would move ~/${pair%%:*} to ~/${pair##*:} (Aroli Desktop rename)"
-            else
-                run mkdir -p "$(dirname "$new_dir")" \
-                    && run mv -- "$legacy_dir" "$new_dir" \
-                    && ok "~/${pair%%:*} moved to ~/${pair##*:}"
-            fi
         fi
     done
 
@@ -1927,7 +1856,7 @@ phase_sddm() {
 
     # An already-installed theme still gets its language checked. It used to
     # return right here, which is why './install.sh --lang en' on a machine that
-    # already had the rice updated the shell and the lock screen and left the
+    # already had Aroli updated the shell and the lock screen and left the
     # login in Spanish, quietly: the theme installer only ever seeds theme.conf
     # the first time, so nothing else was going to write that key.
     if [ -d /usr/share/sddm/themes/hyprisland ]; then

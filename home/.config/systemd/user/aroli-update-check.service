@@ -1,5 +1,5 @@
 [Unit]
-# Aroli Desktop update check: asks GitHub for the newest stable tag.
+# Aroli Desktop update check: asks GitHub for the newest beta tag.
 #
 # This is the ONLY unattended network the rice performs, and it is tiny: one
 # `git ls-remote --tags` (a few KB) or one conditional API GET with ETag (a

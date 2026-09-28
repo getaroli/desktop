@@ -22,8 +22,8 @@ that raises it must update this page, `README.md`, and the release notes.
 
 ## Release smoke checklist
 
-Before a stable release, run the following on a disposable x86_64 Arch VM. For
-an Omarchy release, repeat the session checks on a disposable Omarchy VM when
+Before each beta release, run the following on a disposable x86_64 Arch VM. For
+an Omarchy beta, repeat the session checks on a disposable Omarchy VM when
 one is available. Do not run this checklist on a personal workstation.
 
 1. Start from a fresh user account with no Aroli files or prior snapshots.
@@ -36,7 +36,7 @@ one is available. Do not run this checklist on a personal workstation.
    and the documented language/keyboard behavior.
 5. Create a snapshot, change a supported config, and restore it. Confirm the
    previous config is retained as a `.before-snapshot-*` backup.
-6. On a disposable clone, exercise `aroli update --dry-run`, a stable update,
+6. On a disposable clone, exercise `aroli update --dry-run`, a beta update,
    and rollback. Confirm a failed or interrupted update remains recoverable.
 7. Record the OS image date, Omarchy version if applicable, Aroli tag, hardware
    architecture, pass/fail result, and sanitized logs in the release PR.

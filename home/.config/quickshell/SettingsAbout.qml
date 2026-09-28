@@ -16,7 +16,7 @@ Flickable {
     id: root
 
     property string note: I18n.tr("One single pass when you open the section; no polling loop.")
-    readonly property int matchCount: cSw.visibleRows + cHw.visibleRows + cRice.visibleRows
+    readonly property int matchCount: cSw.visibleRows + cHw.visibleRows + cAroli.visibleRows
 
     contentHeight: col.implicitHeight + 34
     clip: true
@@ -46,7 +46,7 @@ Flickable {
                                           else if(h>0) printf "%d h %d min", h, m;
                                           else printf "%d min", m}' /proc/uptime)"
             printf 'pkgs\\t%s\\n'   "$(pacman -Qq 2>/dev/null | wc -l) ${I18n.tr("packages")}"
-            printf 'rice\\t%s\\n'   "$("$HOME/.local/bin/rice" version 2>/dev/null || rice version 2>/dev/null || echo "?")"
+            printf 'aroli\\t%s\\n'   "$("$HOME/.local/bin/aroli" version 2>/dev/null || echo "?")"
             printf 'rel\\t%s\\n'    "$(jq -r 'if .update_available then ((.remote // \"?\") + \" (!)\") else (.remote // \"?\") end' ~/.cache/aroli-desktop/update.json 2>/dev/null || echo "?")"
         `]
         stdout: SplitParser {
@@ -160,17 +160,17 @@ Flickable {
         }
 
         SettingsControls.Card_ {
-            id: cRice
-            title: I18n.tr("THIS RICE")
+            id: cAroli
+            title: I18n.tr("THIS AROLI")
 
             SettingsControls.Row_ {
-                label: I18n.tr("Rice version")
-                hint: root.info["rice"] || ""
-                SettingsControls.Val_ { text: root.info["rice"] || "…" }
+                label: I18n.tr("Aroli version")
+                hint: root.info["aroli"] || ""
+                SettingsControls.Val_ { text: root.info["aroli"] || "…" }
             }
             SettingsControls.Row_ {
                 label: I18n.tr("Latest release seen")
-                hint: I18n.tr("Written by the daily timer in ~/.cache/aroli-desktop/update.json. “(!)” means an update is available: run “rice update --dry-run” in a terminal.")
+                hint: I18n.tr("Written by the daily timer in ~/.cache/aroli-desktop/update.json. “(!)” means an update is available: run “aroli update --dry-run” in a terminal.")
                 SettingsControls.Val_ { text: root.info["rel"] || "…" }
             }
 
@@ -193,7 +193,7 @@ Flickable {
 
         SettingsControls.Note_ {
             Layout.topMargin: 10
-            visible: ShellState.settingsQuery.length > 0 && !cSw.visible && !cHw.visible && !cRice.visible
+            visible: ShellState.settingsQuery.length > 0 && !cSw.visible && !cHw.visible && !cAroli.visible
             text: I18n.tr("Nothing in About matches “{0}”.", ShellState.settingsQuery)
         }
     }
