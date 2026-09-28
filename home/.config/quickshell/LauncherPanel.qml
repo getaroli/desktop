@@ -296,6 +296,18 @@ Item {
         onWheel: function (w) { w.accepted = true; }
     }
 
+    // Small threshold mark: the launcher reads as an extension of the notch,
+    // while the dark field remains quiet around the search line.
+    Rectangle {
+        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter }
+        y: 2
+        width: 44
+        height: 3
+        radius: Appearance.radPill
+        color: Colors.accent
+        opacity: 0.72
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.topMargin: 4
@@ -313,7 +325,7 @@ Item {
             // verdad se buscan aplicaciones.
             Text {
                 text: root.modeInfo.icon
-                color: (field.text.length > 0 || !root.isApps) ? Colors.accent : "#6c6c6c"
+                color: (field.text.length > 0 || !root.isApps) ? Colors.accent : Colors.inkLo
                 font.family: Appearance.font
                 font.pixelSize: Appearance.fsTitle
                 Behavior on color { ColorAnimation { duration: Appearance.mQuick; easing.type: Easing.OutQuad } }
@@ -351,7 +363,7 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: root.modeInfo.hint
                 color: Colors.inkHi
-                placeholderTextColor: "#5e5e5e"
+                placeholderTextColor: Colors.inkLo
                 selectionColor: Colors.accent
                 selectedTextColor: "#000000"
                 font.family: Appearance.fontUI
@@ -454,7 +466,7 @@ Item {
                         }
                         Text {
                             text: modelData.name
-                            color: "#5e5e5e"
+                            color: Colors.inkLo
                             font.family: Appearance.fontUI; font.pixelSize: Appearance.fsXS
                         }
                     }
@@ -464,7 +476,7 @@ Item {
             Text {
                 visible: !root.hintsVisible && root.favHover.length === 0
                 text: String(root.results.length)
-                color: "#5e5e5e"
+                color: Colors.inkLo
                 font.family: Appearance.fontUI
                 font.pixelSize: Appearance.fsS
             }
@@ -476,7 +488,7 @@ Item {
             Layout.rightMargin: 12
             Layout.bottomMargin: 6
             height: 1
-            color: "#1e1e1e"
+            color: Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.08)
         }
 
         // ─────────────── favoritos fijados ───────────────
@@ -727,7 +739,7 @@ Item {
                     : root.mode === "clip" ? I18n.tr("The clipboard is empty")
                     : root.mode === "win" ? I18n.tr("No windows open")
                     : I18n.tr("No results")
-                color: "#5e5e5e"
+                color: Colors.inkLo
                 font.family: Appearance.fontUI
                 font.pixelSize: Appearance.fsM
             }
@@ -758,7 +770,7 @@ Item {
         height: ShellState.launcherRowH
         radius: Appearance.radS
         color: base.sel ? Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.20)
-             : (baseMa.containsMouse && root.mouseNav) ? Qt.rgba(1, 1, 1, 0.06)
+             : (baseMa.containsMouse && root.mouseNav) ? Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.06)
              : "transparent"
         Behavior on color { ColorAnimation { duration: Appearance.mQuick; easing.type: Easing.OutQuad } }
 
