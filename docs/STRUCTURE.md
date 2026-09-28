@@ -14,7 +14,7 @@ it; do not keep two copies. See `DEVELOPMENT.md` for the workflow and
 | `home/` | Deployed tree, mirrored into `$HOME` by `install.sh config` |
 | `packages/` | Package lists (`pacman`, `aur`, `gpu`, `extra`, `services`, `optional-*`, `git-repos`) |
 | `system/` | System-level files outside `$HOME` (currently `system/etc/`) |
-| `scripts/` | Standalone helpers (migration, smoke test, font sync, delivery check) |
+| `scripts/` | Standalone helpers (smoke test, font sync, delivery check) |
 | `bin/` | Go build output (gitignored; `make build`) |
 | `docs/` | Contributor and user guides |
 | `agents/skills/` | AI agent skills, deployed to `~/.agents/skills` by `install.sh` |
@@ -36,7 +36,7 @@ copies (`--copy`), backing up replaced files to `~/.dotfiles-backup`.
   `*.example` and then user-owned (untracked, never re-laid).
 - `home/.config/quickshell/` — bar, notch, panels, Settings UI, translations
   (`translations-es.js`, `translations-pt-BR.js`; en-US source in QML).
-- `home/.local/bin/` — user-level helpers (`aroli-backend`, `rice` shim,
+- `home/.local/bin/` — user-level helpers (`aroli-backend`,
   wallpaper/palette/battery/gaming scripts). No root installs.
 - `home/.config/systemd/user/` — `aroli-update-check.{service,timer}` and
   `aroli-update-notify.service` (idle, oneshot, cache-read only).

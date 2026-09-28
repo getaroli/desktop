@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# Deprecated shim: umbra-cursor-size is now aroli-cursor-size
-# (Umbra Cursor -> Aroli Pointer rename). Kept so old keybindings,
-# docs and muscle memory keep working.
-set -euo pipefail
-printf 'Deprecated: use aroli-cursor-size instead.\n' >&2
-exec "$(dirname -- "${BASH_SOURCE[0]}")/aroli-cursor-size" "$@"

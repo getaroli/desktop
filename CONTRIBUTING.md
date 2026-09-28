@@ -129,16 +129,16 @@ Fix stuff                                   # vague, capitalized
 | `install.sh` | Installer (symlink mode by default, `--copy` available) |
 | `diagnose` | Read-only system diagnostics |
 | `packages/` | Package lists (`pacman`, `aur`, `optional-*`) |
-| `docs/` | Guides: `STRUCTURE.md` (repo map), `DEVELOPMENT.md` (workflow), `UPDATES.md` (delivery), migration and identity notes |
+| `docs/` | Guides: `STRUCTURE.md` (repo map), `DEVELOPMENT.md` (workflow), `UPDATES.md` (delivery), support and identity notes |
 | `.githooks/` + `scripts/verify-delivery.sh` | Commit/push gates (activate: `git config core.hooksPath .githooks`) and the delivery-contract check |
 | `LLMS.md` | Operating contract for automations and AI agents |
 
 ## 8. Releases
 
 - Bump `VERSION`, add a `CHANGELOG.md` entry, commit, then tag:
-  `git tag -s vX.Y.Z -m "Aroli Desktop vX.Y.Z"` and push the tag.
+  `git tag -s v0.1.0-beta.N -m "Aroli Desktop v0.1.0-beta.N"` and push the tag.
   CI checks that the tag matches `VERSION` and that `aroli --help`,
   `diagnose` and the i18n dictionaries still pass.
-- GitHub Releases are cut from the tag with auto-generated notes plus the
-  `CHANGELOG.md` entry. Clients only follow `vX.Y.Z` tags (`aroli update`
-  refuses anything else); `main` is never auto-applied.
+- GitHub Releases are pre-releases cut from the tag with the matching
+  `CHANGELOG.md` entry. Clients only follow `v0.1.0-beta.N` tags
+  (`aroli update` refuses anything else); `main` is never auto-applied.

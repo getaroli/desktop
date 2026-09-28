@@ -37,7 +37,6 @@ precedence over convenience.
 | `home/.local/bin/aroli` | Version, update, rollback, and cleanup CLI (`aroli --help`). |
 | `VERSION` / `CHANGELOG.md` | Single source of truth for the version and per-release history. |
 | `home/Pictures/wallpapers/` | Default wallpapers shipped by the aroli. |
-| `scripts/migrate-from-legacy-rice.sh` | Safe migration from the legacy fork. |
 | `agents/skills/` | AI agent skills, deployed to `~/.agents/skills` by `install.sh`. |
 | `OMARCHY.md` | Compatibility contract with Omarchy. |
 
@@ -56,19 +55,6 @@ Do not use `--yes` as a substitute for human choice for optional packages. If
 the user wants an optional package, show the name, purpose, origin (official
 repository or AUR), relevant dependencies, and estimated size before
 installing.
-
-## Safe migration flow
-
-```sh
-# Changes nothing.
-./scripts/migrate-from-legacy-rice.sh
-
-# Only after the user approves the symlink list.
-./scripts/migrate-from-legacy-rice.sh --apply
-```
-
-The script keeps the legacy clone intact. Do not remove the old directory or
-delete backups without an explicit request.
 
 ## Auditing and fixing
 

@@ -2,12 +2,12 @@
 # Aroli Desktop login notice: surfaces a KNOWN pending update on login.
 #
 # This performs zero network: it only reads ~/.cache/aroli-desktop/update.json
-# (written by rice-update-check.timer) and exits in milliseconds. At most one
+# (written by aroli-update-check.timer) and exits in milliseconds. At most one
 # notice per release (tracked in update-notify.seen); with no pending update,
 # or with no notification daemon running, it exits silently.
 #
 # Opt out (stays off, check cache and bar dot keep working):
-#   systemctl --user disable rice-update-notify.service
+#   systemctl --user disable aroli-update-notify.service
 Description=Aroli Desktop update notice on graphical login (cache read only)
 Documentation=file://%h/.local/bin/aroli
 PartOf=graphical-session.target

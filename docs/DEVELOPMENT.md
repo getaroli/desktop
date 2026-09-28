@@ -69,8 +69,8 @@ git config core.hooksPath .githooks
   when absent).
 
 One logical change per commit. User-facing changes get a `CHANGELOG.md`
-entry under `[Unreleased]`; releases bump `VERSION` and tag signed
-`vX.Y.Z` (CI checks tag == `VERSION`).
+entry under `[Unreleased]`; beta releases bump `VERSION` and tag a signed
+`v0.1.0-beta.N` (CI checks tag == `VERSION`).
 
 ## Research
 

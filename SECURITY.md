@@ -2,9 +2,9 @@
 
 ## Supported versions
 
-Security fixes are made against the current stable release and the current
-development branch. Older tags are not maintained; upgrade to the latest
-stable release before reporting a vulnerability that may already be fixed.
+Security fixes are made against the current beta release and the current
+development branch. Older tags are not maintained; upgrade to the latest beta
+release before reporting a vulnerability that may already be fixed.
 
 ## Reporting a vulnerability
 
@@ -20,7 +20,7 @@ unredacted diagnostic bundles in a report.
 
 ## Update integrity
 
-The CLI updater accepts only stable `vX.Y.Z` release tags, downloads assets
+The CLI updater accepts only beta `v0.1.0-beta.N` release tags, downloads assets
 from the fixed `github.com/getaroli/desktop` release URL, verifies the binary
 against its SHA-256 entry in `SHA256SUMS.txt`, writes a temporary file beside
 the installed binary with mode `0755`, then atomically renames it into place.

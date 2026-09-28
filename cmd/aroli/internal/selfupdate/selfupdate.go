@@ -1,4 +1,4 @@
-// Package selfupdate replaces only the CLI binary from a stable GitHub
+// Package selfupdate replaces only the CLI binary from a beta GitHub
 // release after verifying its SHA-256 checksum. It never touches the rice.
 package selfupdate
 
@@ -14,19 +14,20 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/getaroli/desktop/cmd/aroli/internal/install"
 )
 
-const githubAPIRelease = "https://api.github.com/repos/getaroli/desktop/releases/latest"
+const githubAPIReleases = "https://api.github.com/repos/getaroli/desktop/releases?per_page=100"
+const githubAPITags = "https://api.github.com/repos/getaroli/desktop/tags?per_page=100"
 
 type githubRelease struct {
-	TagName string `json:"tag_name"`
+	TagName    string `json:"tag_name"`
+	Prerelease bool   `json:"prerelease"`
 }
 
-var stableTagPattern = regexp.MustCompile(`^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$`)
+var betaTagPattern = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.(0|[1-9][0-9]*)$`)
 
 // UpdateCLI implements `aroli cli update [--dry-run]`.
 func UpdateCLI(version string, args []string) error {
@@ -82,7 +83,7 @@ func UpdateCLI(version string, args []string) error {
 }
 
 func latestRelease(client *http.Client) (githubRelease, error) {
-	request, err := http.NewRequest(http.MethodGet, githubAPIRelease, nil)
+	request, err := http.NewRequest(http.MethodGet, githubAPIReleases, nil)
 	if err != nil {
 		return githubRelease{}, err
 	}
@@ -95,14 +96,73 @@ func latestRelease(client *http.Client) (githubRelease, error) {
 	if response.StatusCode != http.StatusOK {
 		return githubRelease{}, fmt.Errorf("GitHub respondeu %s ao consultar a CLI", response.Status)
 	}
-	var release githubRelease
-	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&release); err != nil {
+	var releases []githubRelease
+	if err := json.NewDecoder(io.LimitReader(response.Body, 4<<20)).Decode(&releases); err != nil {
 		return githubRelease{}, err
 	}
-	if !stableTagPattern.MatchString(release.TagName) {
-		return githubRelease{}, fmt.Errorf("tag de release inválida para atualização: %q", release.TagName)
+	var latest githubRelease
+	for _, release := range releases {
+		if !release.Prerelease || !betaTagPattern.MatchString(release.TagName) {
+			continue
+		}
+		if latest.TagName == "" || betaTagGreater(release.TagName, latest.TagName) {
+			latest = release
+		}
 	}
-	return release, nil
+	if latest.TagName != "" {
+		return latest, nil
+	}
+	return latestBetaTag(client)
+}
+
+func latestBetaTag(client *http.Client) (githubRelease, error) {
+	request, err := http.NewRequest(http.MethodGet, githubAPITags, nil)
+	if err != nil {
+		return githubRelease{}, err
+	}
+	request.Header.Set("Accept", "application/vnd.github+json")
+	response, err := client.Do(request)
+	if err != nil {
+		return githubRelease{}, fmt.Errorf("não foi possível verificar tags beta da CLI: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return githubRelease{}, fmt.Errorf("GitHub respondeu %s ao consultar tags beta", response.Status)
+	}
+	var tags []struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(io.LimitReader(response.Body, 4<<20)).Decode(&tags); err != nil {
+		return githubRelease{}, err
+	}
+	var latest githubRelease
+	for _, tag := range tags {
+		if !betaTagPattern.MatchString(tag.Name) {
+			continue
+		}
+		if latest.TagName == "" || betaTagGreater(tag.Name, latest.TagName) {
+			latest = githubRelease{TagName: tag.Name, Prerelease: true}
+		}
+	}
+	if latest.TagName == "" {
+		return githubRelease{}, errors.New("nenhuma tag beta válida foi publicada")
+	}
+	return latest, nil
+}
+
+func betaTagGreater(a, b string) bool {
+	left, right := betaTagPattern.FindStringSubmatch(a), betaTagPattern.FindStringSubmatch(b)
+	if left == nil || right == nil {
+		return false
+	}
+	for i := 1; i < len(left); i++ {
+		l, _ := strconv.Atoi(left[i])
+		r, _ := strconv.Atoi(right[i])
+		if l != r {
+			return l > r
+		}
+	}
+	return false
 }
 
 func cliAssetName(goos, arch string) (string, error) {
@@ -176,10 +236,6 @@ func installDownloadedCLI(binary []byte) error {
 	}
 	if err := os.Rename(name, destination); err != nil {
 		return err
-	}
-	home, _ := os.UserHomeDir()
-	if home != "" {
-		return install.EnsureRiceShim(home)
 	}
 	return nil
 }

@@ -114,23 +114,7 @@ func installSelf() error {
 	if err := os.Rename(tmpName, dest); err != nil {
 		return err
 	}
-	return EnsureRiceShim(home)
-}
-
-// EnsureRiceShim keeps the deprecated `rice` name working: a tiny script
-// that warns once on stderr and hands over to the aroli binary. Same
-// treatment the umbra-cursor-size rename got.
-func EnsureRiceShim(home string) error {
-	dest := filepath.Join(home, ".local", "bin", "aroli")
-	shim := filepath.Join(home, ".local", "bin", "rice")
-	content := "#!/usr/bin/env bash\n# Deprecated shim: rice is now aroli.\nset -euo pipefail\nprintf 'Deprecated: use aroli instead.\\n' >&2\nexec \"" + dest + "\" \"$@\"\n"
-	if data, err := os.ReadFile(shim); err == nil && string(data) == content {
-		return nil
-	}
-	if err := os.MkdirAll(filepath.Dir(shim), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(shim, []byte(content), 0o755)
+	return nil
 }
 
 func sameFile(a, b string) bool {

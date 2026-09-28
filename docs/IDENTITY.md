@@ -28,7 +28,7 @@ Aroli even with a bright or strongly coloured image.
   Aroli Backdrops. The rice adds no new brand marks.
 - Omarchy and Arch are trademarks of their respective communities; they are
   shown only to identify the active platform.
-- The code remains under [GPL-3.0-only](../LICENSE), with upstream
+- The code remains under [GPL-3.0-only](../LICENSE), with required source
   attribution.
 
 ## Lock screen

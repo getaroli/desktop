@@ -137,13 +137,6 @@ func EnsureRepositoryWithCleanup(explicit string, dryRun bool) (string, func(), 
 			return path, noCleanup, nil
 		}
 	}
-	// Compatibility with checkouts from before the Umbra Noctis -> Aroli
-	// Desktop rename.
-	if env := os.Getenv("UMBRA_RICE_REPO"); env != "" {
-		if path, err := ValidRepo(env); err == nil {
-			return path, noCleanup, nil
-		}
-	}
 	if cwd, err := os.Getwd(); err == nil {
 		if path, err := ValidRepo(cwd); err == nil {
 			return path, noCleanup, nil

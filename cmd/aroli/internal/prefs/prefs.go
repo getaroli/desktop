@@ -91,11 +91,6 @@ func ImportPreferences(args []string) error {
 	}
 	data, err := os.ReadFile(filepath.Join(source, "aroli-preferences.json"))
 	if err != nil {
-		// Compatibility with exports from before the Umbra Noctis ->
-		// Aroli Desktop rename.
-		data, err = os.ReadFile(filepath.Join(source, "umbra-preferences.json"))
-	}
-	if err != nil {
 		return err
 	}
 	var pref portablePreferences

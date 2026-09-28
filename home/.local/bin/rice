@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# Compat shim so installers predating the aroli rename keep working: they
-# fetch home/.local/bin/rice from the target tag and exec it. Silent on
-# purpose (it runs inside updates, not at a terminal).
-set -euo pipefail
-exec "$(dirname -- "${BASH_SOURCE[0]}")/aroli-backend" "$@"

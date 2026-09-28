@@ -45,27 +45,69 @@ func TestChecksumFor(t *testing.T) {
 	}
 }
 
-func TestLatestReleaseRequiresStableSemVerTag(t *testing.T) {
-	for _, tag := range []string{"v1.2.3", "v0.0.0"} {
-		t.Run(tag, func(t *testing.T) {
-			got, err := latestRelease(releaseTestClient(tag))
-			if err != nil || got.TagName != tag {
-				t.Fatalf("latestRelease() = %#v, %v", got, err)
-			}
-		})
-	}
-	for _, tag := range []string{"", "main", "v1.2", "v01.2.3", "v1.2.3-rc.1", "v1.2.3/../../other"} {
-		t.Run("reject-"+tag, func(t *testing.T) {
-			if _, err := latestRelease(releaseTestClient(tag)); err == nil {
-				t.Fatalf("latestRelease accepted invalid tag %q", tag)
-			}
-		})
+func TestLatestReleaseSelectsNewestPublishedBeta(t *testing.T) {
+	client := releaseTestClient(
+		githubRelease{TagName: "v0.1.0-beta.2", Prerelease: true},
+		githubRelease{TagName: "v0.1.0-beta.10", Prerelease: true},
+		githubRelease{TagName: "v9.0.0", Prerelease: false},
+		githubRelease{TagName: "v0.2.0-beta.1", Prerelease: false},
+	)
+	got, err := latestRelease(client)
+	if err != nil || got.TagName != "v0.1.0-beta.10" {
+		t.Fatalf("latestRelease() = %#v, %v", got, err)
 	}
 }
 
-func releaseTestClient(tag string) *http.Client {
-	body, _ := json.Marshal(githubRelease{TagName: tag})
+func TestLatestReleaseRejectsMissingBeta(t *testing.T) {
+	for _, releases := range [][]githubRelease{
+		{},
+		{{TagName: "v1.2.3", Prerelease: false}},
+		{{TagName: "v1.2.3-rc.1", Prerelease: true}},
+		{{TagName: "v1.2.3/../../other", Prerelease: true}},
+	} {
+		if _, err := latestRelease(releaseTestClient(releases...)); err == nil {
+			t.Fatalf("latestRelease accepted non-beta releases %#v", releases)
+		}
+	}
+}
+
+func TestLatestReleaseFallsBackToBetaTag(t *testing.T) {
+	client := multiResponseClient(
+		[]githubRelease{{TagName: "v3.4.6", Prerelease: false}},
+		[]struct {
+			Name string `json:"name"`
+		}{{Name: "v3.4.6"}, {Name: "v0.1.0-beta.1"}},
+	)
+	got, err := latestRelease(client)
+	if err != nil || got.TagName != "v0.1.0-beta.1" {
+		t.Fatalf("latestRelease() fallback = %#v, %v", got, err)
+	}
+}
+
+func releaseTestClient(releases ...githubRelease) *http.Client {
+	body, _ := json.Marshal(releases)
 	return &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Header:     make(http.Header),
+			Body:       io.NopCloser(bytes.NewReader(body)),
+			Request:    request,
+		}, nil
+	})}
+}
+
+func multiResponseClient(releases []githubRelease, tags []struct {
+	Name string `json:"name"`
+}) *http.Client {
+	bodies := [][]byte{}
+	releaseBody, _ := json.Marshal(releases)
+	tagBody, _ := json.Marshal(tags)
+	bodies = append(bodies, releaseBody, tagBody)
+	call := 0
+	return &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		body := bodies[call]
+		call++
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Status:     "200 OK",

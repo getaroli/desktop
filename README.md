@@ -41,7 +41,6 @@ your image without turning every application surface into its dominant colour.
 <p align="center">
   <a href="https://github.com/getaroli/desktop/commits/main"><img src="https://img.shields.io/github/commit-activity/m/getaroli/desktop?style=flat-square&color=8b7cff&label=community%20activity" alt="Monthly commit activity"></a>
   <a href="https://github.com/getaroli/desktop/issues"><img src="https://img.shields.io/github/issues/getaroli/desktop?style=flat-square&color=8b7cff&label=issues" alt="Open issues"></a>
-  <a href="https://github.com/getaroli/desktop/network/members"><img src="https://img.shields.io/github/forks/getaroli/desktop?style=flat-square&color=8b7cff&label=forks" alt="GitHub forks"></a>
 </p>
 
 <p align="center">
@@ -56,19 +55,17 @@ your image without turning every application surface into its dominant colour.
 - **Aroli Pointer** cursor and visual identification of the active platform: Omarchy on
   Omarchy, Arch on Arch.
 - Pywal accents extracted from the current wallpaper, applied over stable dark
-  Aroli Dark surfaces. Settings › Appearance › Colour system can restore the legacy
-  mode where the wallpaper also tints application backgrounds.
+  Aroli Dark surfaces. Settings › Appearance › Colour system can enable
+  wallpaper-tinted application backgrounds.
 - Four Aroli Backdrops installed with the aroli: Ember Coast, Silent
   Threshold, Obsidian Dunes, and Black Mountains.
 - Aroli New Tab for Brave Origin: search, clock, shortcuts and tasks on the
   wallpaper palette, with a Sistema / Aroli Dark / Aroli Black switch that
   also repaints the browser frame. No network, no polling.
-- Assisted migration for installs coming from the previous fork.
 
 Change the cursor size consistently across Hyprland and GTK with
 `aroli-cursor-size 40`. Values from 16 to 96 are accepted; relog afterwards
 so already-running applications reload the XCursor.
-(`umbra-cursor-size` remains as a deprecated alias.)
 
 <details>
 <summary><strong>See the aroli in motion</strong></summary>
@@ -89,11 +86,9 @@ so already-running applications reload the XCursor.
 > terminal assistant, while the explicit subcommands remain suitable for automation.
 
 ```sh
-# Stable version (recommended), prebuilt binary from GitHub Releases
-# Note: versioned `go install ...@vX.Y.Z` does not work for v2+ releases
-# because the module intentionally has no `/v2` suffix; use the binary.
+# Beta CLI binary from GitHub Releases
 arch="$(uname -m)"; case "$arch" in x86_64) arch=amd64;; aarch64|arm64) arch=arm64;; esac
-curl -fL "https://github.com/getaroli/desktop/releases/latest/download/aroli-linux-$arch" -o ~/.local/bin/aroli
+curl -fL "https://github.com/getaroli/desktop/releases/download/v0.1.0-beta.1/aroli-linux-$arch" -o ~/.local/bin/aroli
 chmod +x ~/.local/bin/aroli
 
 # Or install from the current main branch (Go 1.27+, development version)
@@ -142,13 +137,13 @@ Requires **Hyprland 0.56+**. Aroli Desktop uses `hyprland.lua`, not
 | `aroli logs` | Shows the last 100 lines of the latest installation log. |
 
 See [supported environments and release smoke checks](docs/SUPPORT.md) and the
-[stable release checklist](docs/RELEASE-CHECKLIST.md). Report security issues
+[beta release checklist](docs/RELEASE-CHECKLIST.md). Report security issues
 privately using [SECURITY.md](SECURITY.md).
 
 ## Updates
 
-Aroli Desktop follows **stable tags** (`vX.Y.Z`, SemVer), never `main`,
-and notifies you on its own when a release lands on GitHub:
+Aroli Desktop is in beta and follows **beta tags** (`v0.1.0-beta.N`), never
+`main`. Beta releases are pre-releases and updates require your confirmation:
 
 - A daily timer (`aroli-update-check.timer`, idle priority, no
   resident process) transfers a few KB and writes
@@ -193,17 +188,6 @@ Aroli Desktop works on top of Omarchy without replacing its foundation. It does
 not edit `/usr/share/omarchy/` and keeps customizations in the appropriate
 user paths. See [OMARCHY.md](OMARCHY.md) for compatibility, limits, and
 safe diagnostics.
-
-## Migrating from the previous aroli
-
-The script first inspects existing links; it only changes anything with `--apply`.
-
-```sh
-./scripts/migrate-from-legacy-rice.sh
-./scripts/migrate-from-legacy-rice.sh --apply
-```
-
-See the step-by-step walkthrough and guarantees in [docs/MIGRATION.md](docs/MIGRATION.md).
 
 ---
 

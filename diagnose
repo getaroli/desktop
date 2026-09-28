@@ -676,21 +676,21 @@ else
     note "never checked for releases yet: aroli check --force"
 fi
 
-if systemctl --user list-unit-files --no-legend rice-update-check.timer 2>/dev/null | grep -q .; then
-    if systemctl --user is-enabled --quiet rice-update-check.timer 2>/dev/null; then
-        good "rice-update-check.timer enabled (daily, idle priority)"
+if systemctl --user list-unit-files --no-legend aroli-update-check.timer 2>/dev/null | grep -q .; then
+    if systemctl --user is-enabled --quiet aroli-update-check.timer 2>/dev/null; then
+        good "aroli-update-check.timer enabled (daily, idle priority)"
     else
-        eye "rice-update-check.timer is disabled: release notices stop"
-        note "re-enable:  systemctl --user enable rice-update-check.timer"
+        eye "aroli-update-check.timer is disabled: beta release notices stop"
+        note "re-enable:  systemctl --user enable aroli-update-check.timer"
     fi
 fi
 
-if systemctl --user list-unit-files --no-legend rice-update-notify.service 2>/dev/null | grep -q .; then
-    if systemctl --user is-enabled --quiet rice-update-notify.service 2>/dev/null; then
-        good "rice-update-notify.service enabled (login notice, cache read only)"
+if systemctl --user list-unit-files --no-legend aroli-update-notify.service 2>/dev/null | grep -q .; then
+    if systemctl --user is-enabled --quiet aroli-update-notify.service 2>/dev/null; then
+        good "aroli-update-notify.service enabled (login notice, cache read only)"
     else
-        eye "rice-update-notify.service is disabled: no login notice for pending updates"
-        note "re-enable:  systemctl --user enable rice-update-notify.service"
+        eye "aroli-update-notify.service is disabled: no login notice for pending beta updates"
+        note "re-enable:  systemctl --user enable aroli-update-notify.service"
     fi
 fi
 

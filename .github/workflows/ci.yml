@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, unstable-dev]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck qt6-declarative-dev-tools qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts
           ./scripts/verify-delivery.sh
-          shellcheck -S error install.sh diagnose home/.local/bin/aroli-backend home/.local/bin/rice scripts/*.sh
+          shellcheck -S error install.sh diagnose home/.local/bin/aroli-backend scripts/*.sh
           export PATH="$PATH:/usr/lib/qt6/bin:/usr/lib/x86_64-linux-gnu/qt6/bin"
           QMLLINT="$(command -v qmllint || command -v qml6lint)"
           [ -n "$QMLLINT" ] || { echo "qmllint/qml6lint not found in PATH ($PATH)"; exit 1; }
@@ -62,8 +62,6 @@ jobs:
           bash -n install.sh
           bash -n diagnose
           bash -n home/.local/bin/aroli-backend
-          bash -n home/.local/bin/rice
-          bash -n scripts/migrate-from-legacy-rice.sh
           bash -n scripts/sync-aroli-fonts.sh
       - name: Installer dry-run and shell interface
         run: |
