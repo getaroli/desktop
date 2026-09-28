@@ -299,8 +299,7 @@ Item {
     // Small threshold mark: the launcher reads as an extension of the notch,
     // while the dark field remains quiet around the search line.
     Rectangle {
-        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter }
-        y: 2
+        anchors { top: parent.top; topMargin: 2; horizontalCenter: parent.horizontalCenter }
         width: 44
         height: 3
         radius: Appearance.radPill

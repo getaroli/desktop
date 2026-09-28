@@ -19,8 +19,7 @@ Item {
     // A short accent threshold ties the expanded control surface back to the
     // notch without turning the entire panel into a wallpaper-colored slab.
     Rectangle {
-        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter }
-        y: 6
+        anchors { top: parent.top; topMargin: 6; horizontalCenter: parent.horizontalCenter }
         width: 44
         height: 3
         radius: Appearance.radPill
