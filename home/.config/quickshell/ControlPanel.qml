@@ -16,6 +16,17 @@ Item {
     // swallows clicks in the gap so they never close the panel
     MouseArea { anchors.fill: parent }
 
+    // A short accent threshold ties the expanded control surface back to the
+    // notch without turning the entire panel into a wallpaper-colored slab.
+    Rectangle {
+        anchors { top: parent.top; topMargin: 6; horizontalCenter: parent.horizontalCenter }
+        width: 44
+        height: 3
+        radius: Appearance.radPill
+        color: Colors.accent
+        opacity: 0.72
+    }
+
     RowLayout {
         anchors { fill: parent; leftMargin: 22; rightMargin: 22; topMargin: 20; bottomMargin: 18 }
         spacing: 20
@@ -29,7 +40,7 @@ Item {
             Layout.fillHeight: true
         }
 
-        Rectangle { Layout.fillHeight: true; width: 1; color: "#1e1e1e" }
+        Rectangle { Layout.fillHeight: true; width: 1; color: Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.08) }
 
         // ═════════════════ center: controls ═════════════════
         ColumnLayout {
@@ -111,8 +122,16 @@ Item {
                     transform: Translate { y: (1 - tg.ent) * 12 }
                     radius: Appearance.radM
                     color: tg.on ? Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.26)
-                         : tgMa.containsMouse ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.05)
+                         : tgMa.containsMouse ? Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.10)
+                         : Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.035)
+                    border.width: 1
+                    border.color: tg.on
+                        ? Qt.rgba(Colors.accent.r, Colors.accent.g, Colors.accent.b, 0.46)
+                        : tgMa.containsMouse
+                            ? Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.14)
+                            : Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.055)
                     Behavior on color { ColorAnimation { duration: Appearance.mQuick; easing.type: Easing.OutQuad } }
+                    Behavior on border.color { ColorAnimation { duration: Appearance.mQuick; easing.type: Easing.OutQuad } }
 
                     ColumnLayout {
                         anchors.centerIn: parent
@@ -126,7 +145,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: tg.label
-                            color: tg.on ? Colors.accent : "#8a8a8a"
+                            color: tg.on ? Colors.accent : Colors.inkMid
                             font.family: Appearance.fontUI; font.pixelSize: Appearance.fsCaption
                         }
                     }
@@ -273,7 +292,7 @@ Item {
             }
         }
 
-        Rectangle { Layout.fillHeight: true; width: 1; color: "#1e1e1e" }
+        Rectangle { Layout.fillHeight: true; width: 1; color: Qt.rgba(Colors.inkHi.r, Colors.inkHi.g, Colors.inkHi.b, 0.08) }
 
         // ══════════════════ right: notifications ══════════════════
         ColumnLayout {
